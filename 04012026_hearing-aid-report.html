@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>助聽器競品情報報告 — 2026 Q1</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fafafa;--surface:#fff;--surface-hover:#f5f5f7;
+  --glass:rgba(255,255,255,0.72);--glass-border:rgba(0,0,0,0.06);
+  --text-primary:#1d1d1f;--text-secondary:#6e6e73;--text-tertiary:#aeaeb2;
+  --accent:#0071e3;--accent-light:#e8f2fe;--accent-hover:#0077ED;
+  --red:#ff3b30;--red-light:#ffe5e3;--orange:#ff9500;--orange-light:#fff3e0;
+  --green:#34c759;--green-light:#e3f9e8;--blue:#007aff;--blue-light:#e8f2fe;
+  --purple:#af52de;--purple-light:#f3e8fd;
+  --border:#d2d2d7;--border-light:#e8e8ed;
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 20px rgba(0,0,0,0.06);
+  --shadow-lg:0 12px 40px rgba(0,0,0,0.08);
+  --shadow-xl:0 20px 60px rgba(0,0,0,0.1);
+  --font-body:'DM Sans','Noto Sans TC',system-ui,sans-serif;
+  --font-display:'DM Sans','Noto Sans TC',system-ui,sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --nav-h:64px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:var(--font-body);color:var(--text-primary);background:var(--bg);
+  -webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden;
+}
+::selection{background:var(--accent);color:#fff}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,4vw,48px);
+  background:var(--glass);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--glass-border);
+  transition:all .3s ease;
+}
+nav.scrolled{box-shadow:var(--shadow-sm)}
+.nav-brand{font-weight:700;font-size:1.05rem;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.nav-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.nav-links{display:flex;gap:6px}
+.nav-links a{
+  font-size:.82rem;font-weight:500;color:var(--text-secondary);text-decoration:none;
+  padding:6px 14px;border-radius:20px;transition:all .2s;letter-spacing:-.01em;
+}
+.nav-links a:hover,.nav-links a.active{color:var(--text-primary);background:var(--surface-hover)}
+.nav-date{font-size:.75rem;color:var(--text-tertiary);font-family:var(--font-mono)}
+
+/* HERO */
+.hero{
+  padding:calc(var(--nav-h) + 80px) clamp(20px,4vw,48px) 60px;
+  max-width:1200px;margin:0 auto;text-align:center;
+}
+.hero-eyebrow{
+  font-size:.75rem;font-weight:600;color:var(--accent);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:16px;
+  opacity:0;animation:fadeUp .8s ease forwards;
+}
+.hero h1{
+  font-family:var(--font-display);font-size:clamp(2.8rem,6vw,4.2rem);font-weight:700;
+  letter-spacing:-.04em;line-height:1.08;margin-bottom:20px;
+  background:linear-gradient(135deg,var(--text-primary) 0%,var(--text-secondary) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  opacity:0;animation:fadeUp .8s ease .1s forwards;
+}
+.hero-sub{
+  font-size:1.15rem;color:var(--text-secondary);max-width:600px;margin:0 auto 40px;
+  line-height:1.55;font-weight:400;letter-spacing:-.01em;
+  opacity:0;animation:fadeUp .8s ease .2s forwards;
+}
+.hero-stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;
+  max-width:800px;margin:0 auto;
+  opacity:0;animation:fadeUp .8s ease .3s forwards;
+}
+.hero-stat{
+  background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);
+  padding:24px 16px;transition:all .3s;
+}
+.hero-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.hero-stat .val{font-size:1.8rem;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.hero-stat .lbl{font-size:.72rem;color:var(--text-secondary);margin-top:4px;font-weight:500}
+
+/* WEEKLY SUMMARY */
+.weekly-summary{
+  max-width:800px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);
+  padding:32px 28px;text-align:left;
+  opacity:0;animation:fadeUp .8s ease .3s forwards;
+}
+.summary-title{
+  font-size:1rem;font-weight:700;letter-spacing:-.01em;margin-bottom:20px;
+  padding-bottom:14px;border-bottom:1px solid var(--border-light);
+}
+.summary-items{display:flex;flex-direction:column;gap:16px}
+.summary-item{display:flex;gap:14px;align-items:flex-start}
+.summary-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:6px;
+}
+.summary-dot.red{background:var(--red)}
+.summary-dot.orange{background:var(--orange)}
+.summary-dot.blue{background:var(--blue)}
+.summary-dot.green{background:var(--green)}
+.summary-dot.warn{background:var(--orange);box-shadow:0 0 0 3px var(--orange-light)}
+.summary-text{font-size:.85rem;color:var(--text-secondary);line-height:1.65}
+.summary-text strong{color:var(--text-primary);font-weight:600}
+
+/* SECTIONS */
+.section{
+  max-width:1200px;margin:0 auto;
+  padding:80px clamp(20px,4vw,48px) 40px;
+}
+.section-header{margin-bottom:48px}
+.section-header .eyebrow{
+  font-size:.7rem;font-weight:600;color:var(--accent);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:8px;
+}
+.section-header h2{
+  font-family:var(--font-display);font-size:clamp(1.8rem,3.5vw,2.6rem);
+  font-weight:700;letter-spacing:-.035em;line-height:1.1;
+}
+.section-header p{font-size:.95rem;color:var(--text-secondary);margin-top:10px;max-width:560px}
+
+/* TABS */
+.tabs-wrap{
+  display:flex;gap:4px;margin-bottom:36px;overflow-x:auto;
+  padding-bottom:4px;
+  -ms-overflow-style:none;scrollbar-width:none;
+}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tab-btn{
+  padding:8px 18px;border-radius:20px;border:none;cursor:pointer;
+  font-family:var(--font-body);font-size:.82rem;font-weight:500;
+  color:var(--text-secondary);background:transparent;white-space:nowrap;
+  transition:all .2s;
+}
+.tab-btn:hover{background:var(--surface-hover);color:var(--text-primary)}
+.tab-btn.active{background:var(--text-primary);color:#fff}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.card{
+  background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);
+  padding:28px;transition:all .35s cubic-bezier(.25,.46,.45,.94);position:relative;overflow:hidden;
+}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:transparent}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:var(--radius) var(--radius) 0 0;opacity:0;transition:opacity .3s;
+}
+.card:hover::before{opacity:1}
+.card.accent-blue::before{background:var(--blue)}
+.card.accent-green::before{background:var(--green)}
+.card.accent-orange::before{background:var(--orange)}
+.card.accent-red::before{background:var(--red)}
+.card.accent-purple::before{background:var(--purple)}
+.card-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  padding:4px 10px;border-radius:20px;margin-bottom:14px;
+}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.card h3{font-size:1.1rem;font-weight:700;letter-spacing:-.02em;margin-bottom:8px;line-height:1.25}
+.card p{font-size:.85rem;color:var(--text-secondary);line-height:1.6}
+.card-meta{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.card-tag{
+  font-size:.7rem;font-weight:500;color:var(--text-tertiary);
+  padding:3px 8px;background:var(--surface-hover);border-radius:var(--radius-xs);
+}
+
+/* DETAIL CARD (full width) */
+.detail-card{
+  background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);
+  padding:36px;margin-bottom:24px;transition:all .3s;
+}
+.detail-card:hover{box-shadow:var(--shadow-md)}
+.detail-card h3{font-size:1.2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.detail-card .subtitle{font-size:.85rem;color:var(--text-secondary);margin-bottom:20px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{
+  text-align:left;font-weight:600;color:var(--text-secondary);font-size:.7rem;
+  text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;
+  border-bottom:2px solid var(--border-light);white-space:nowrap;
+}
+tbody td{
+  padding:12px 14px;border-bottom:1px solid var(--border-light);
+  color:var(--text-primary);vertical-align:top;
+}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:var(--surface-hover)}
+tbody tr:last-child td{border-bottom:none}
+.num{font-family:var(--font-mono);font-weight:500;font-size:.82rem}
+
+/* RISK */
+.risk-high{color:var(--red);font-weight:600}
+.risk-mid{color:var(--orange);font-weight:600}
+.risk-low{color:var(--green);font-weight:600}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:28px}
+.timeline::before{
+  content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;
+  background:var(--border-light);border-radius:2px;
+}
+.tl-item{position:relative;margin-bottom:24px}
+.tl-item::before{
+  content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;
+  border-radius:50%;background:var(--accent);border:3px solid var(--bg);
+}
+.tl-item .tl-date{font-size:.7rem;font-family:var(--font-mono);color:var(--text-tertiary);margin-bottom:2px}
+.tl-item .tl-title{font-size:.9rem;font-weight:600;margin-bottom:2px}
+.tl-item .tl-desc{font-size:.82rem;color:var(--text-secondary)}
+
+/* CHART BAR */
+.bar-chart{display:flex;flex-direction:column;gap:14px;margin:20px 0}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-label{font-size:.78rem;font-weight:500;width:140px;min-width:140px;text-align:right}
+.bar-track{flex:1;height:28px;background:var(--surface-hover);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{
+  height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.25,.46,.45,.94);
+  display:flex;align-items:center;justify-content:flex-end;padding-right:10px;
+  font-size:.7rem;font-weight:600;color:#fff;
+}
+.bar-fill.blue{background:linear-gradient(90deg,#0071e3,#34aadc)}
+.bar-fill.green{background:linear-gradient(90deg,#34c759,#30d158)}
+.bar-fill.orange{background:linear-gradient(90deg,#ff9500,#ffb340)}
+.bar-fill.red{background:linear-gradient(90deg,#ff3b30,#ff6961)}
+.bar-fill.purple{background:linear-gradient(90deg,#af52de,#bf7ae0)}
+
+/* CALLOUT */
+.callout{
+  display:flex;gap:14px;padding:20px;border-radius:var(--radius-sm);
+  margin:16px 0;font-size:.85rem;line-height:1.55;
+}
+.callout.warn{background:var(--orange-light);border-left:3px solid var(--orange)}
+.callout.danger{background:var(--red-light);border-left:3px solid var(--red)}
+.callout.info{background:var(--blue-light);border-left:3px solid var(--blue)}
+.callout.success{background:var(--green-light);border-left:3px solid var(--green)}
+.callout-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.callout-text{color:var(--text-primary)}
+.callout-text strong{font-weight:600}
+
+/* PILL ROW */
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.pill{
+  font-size:.72rem;font-weight:500;padding:5px 12px;border-radius:20px;
+  background:var(--surface-hover);color:var(--text-secondary);
+  border:1px solid var(--border-light);
+}
+
+/* FOOTER */
+footer{
+  text-align:center;padding:60px 20px 40px;font-size:.75rem;color:var(--text-tertiary);
+  border-top:1px solid var(--border-light);margin-top:60px;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.reveal{opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.25,.46,.45,.94)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .card-grid{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .bar-label{width:80px;min-width:80px;font-size:.7rem}
+  .section{padding:60px 16px 30px}
+  .detail-card{padding:24px 18px}
+}
+@media(max-width:480px){
+  .hero-stats{grid-template-columns:1fr 1fr}
+  .hero h1{font-size:2rem}
+}
+
+/* SCROLL INDICATOR */
+.scroll-prog{
+  position:fixed;top:var(--nav-h);left:0;height:2px;background:var(--accent);
+  z-index:101;width:0;transition:width .1s linear;
+}
+
+/* EXPANDABLE */
+.expand-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.78rem;font-weight:500;color:var(--accent);cursor:pointer;
+  border:none;background:none;font-family:var(--font-body);margin-top:10px;
+  transition:color .2s;
+}
+.expand-btn:hover{color:var(--accent-hover)}
+.expand-btn .arrow{transition:transform .3s;display:inline-block}
+.expand-btn.open .arrow{transform:rotate(180deg)}
+.expand-content{
+  max-height:0;overflow:hidden;transition:max-height .4s ease;
+}
+.expand-content.open{max-height:2000px}
+</style>
+</head>
+<body>
+
+<div class="scroll-prog" id="scrollProg"></div>
+
+<nav id="nav">
+  <div class="nav-brand"><span class="dot"></span>競品情報</div>
+  <div class="nav-links">
+    <a href="#competitors">競品動態</a>
+    <a href="#ai">AI 影響</a>
+    <a href="#trends">市場趨勢</a>
+    <a href="#strategy">策略建議</a>
+    <a href="#recall">召回 & 法規</a>
+    <a href="#economy">全球經濟</a>
+  </div>
+  <div class="nav-date">2026-04-01</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Competitive Intelligence Report</div>
+  <h1>助聽器競品情報<br>2026 年第一季</h1>
+  <p class="hero-sub">近兩週（3/18 — 4/1）全球助聽器產業動態彙整：併購、AI 軍備競賽、市場趨勢與策略建議。</p>
+  <div class="weekly-summary">
+    <h3 class="summary-title">本週重點摘要</h3>
+    <div class="summary-items">
+      <div class="summary-item">
+        <span class="summary-dot red"></span>
+        <div class="summary-text"><strong>最大事件：</strong>Amplifon 宣布以 $26 億收購丹麥 GN Hearing（旗下含 ReSound、Beltone、Interton），合併後營收達 €33 億、覆蓋 100+ 國，美國將成為 Amplifon 最大單一市場。此垂直整合對喬山的 OEM/ODM 代工佈局有直接影響，建議密切關注。</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot orange"></span>
+        <div class="summary-text"><strong>Sonova 策略：</strong>發布 CHF 60 億營收目標（FY 2030/31），策略反向——分拆 Consumer Hearing（含 Sennheiser），聚焦聽力核心業務。Phonak Infinio Ultra Sphere 於 3/24 同獲 AI Excellence Award 與 iF Design Award。</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot blue"></span>
+        <div class="summary-text"><strong>Starkey：</strong>獲兩項 BIG AI Excellence Awards，旗下 Omega AI 的 Auracast Assistant 已完整部署，生態與 Oticon / ReSound 已可互通。</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot green"></span>
+        <div class="summary-text"><strong>總經環境：</strong>美伊戰爭加劇，Q1 2026 為 S&P 500 四年來最差季度；油價已達 $112/桶（BlackRock 警告若維持可能達 $150），全球衰退機率 JPMorgan 35%、穆迪 49%。Fed 降息機率從 72% 降至 37%。</div>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot warn"></span>
+        <div class="summary-text"><strong>⚠️ 風險提示：</strong>衰退風險對消費性醫療器材需求具潛在影響，建議提前布局亞太市場以對沖風險。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPETITORS -->
+<section class="section" id="competitors">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 01</div>
+    <h2>競品動態</h2>
+    <p>全球助聽器五大陣營的最新策略佈局與財務表現。</p>
+  </div>
+
+  <div class="tabs-wrap reveal" id="compTabs">
+    <button class="tab-btn active" data-tab="amplifon">Amplifon × GN</button>
+    <button class="tab-btn" data-tab="sonova">Sonova / Phonak</button>
+    <button class="tab-btn" data-tab="starkey">Starkey</button>
+    <button class="tab-btn" data-tab="demant">Demant / Oticon</button>
+    <button class="tab-btn" data-tab="wsa">WS Audiology</button>
+  </div>
+
+  <!-- Amplifon -->
+  <div class="tab-panel reveal" id="panel-amplifon">
+    <div class="detail-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <span class="card-badge badge-blue">重大併購</span>
+          <h3>Amplifon × GN Hearing — 全球最大規模垂直整合</h3>
+          <div class="subtitle">2026/3/16 公告 ｜ 預計 2026 年底完成</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>項目</th><th>內容</th></tr></thead>
+          <tbody>
+            <tr><td>收購標的</td><td>GN Store Nord 旗下 GN Hearing（丹麥）</td></tr>
+            <tr><td>旗下品牌</td><td><div class="pill-row"><span class="pill">ReSound</span><span class="pill">Beltone</span><span class="pill">Interton</span><span class="pill">Jabra Enhance</span></div></td></tr>
+            <tr><td>交易總值</td><td class="num">DKK 170 億（≈ €23 億 / $26 億）</td></tr>
+            <tr><td>對價結構</td><td>現金 DKK 126 億 + 新股 5,600 萬股</td></tr>
+            <tr><td>整合成本</td><td class="num">約 €8,000 萬，2-3 年逐步實現</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-text"><strong>風險：</strong>Amplifon Q4 2025 營收 €6.519 億（低於共識 -2.3%），EBITDA €1.455 億（低於共識 -6%），已廢除 2026 年定量指引。槓桿風險加劇。</div>
+      </div>
+
+      <button class="expand-btn" onclick="toggleExpand(this)">對喬山的影響 <span class="arrow">▼</span></button>
+      <div class="expand-content">
+        <div style="padding-top:14px;font-size:.85rem;color:var(--text-secondary);line-height:1.7">
+          <p>• 合併後 Amplifon 營收 €33 億、覆蓋 100+ 國，美國成為最大單一市場</p>
+          <p style="margin-top:6px">• ReSound + Beltone + Miracle-Ear 將首次同屬一個集團，對零售通路談判力大幅提升</p>
+          <p style="margin-top:6px">• <strong style="color:var(--green)">機會：</strong>GN Hearing 整合期間可能釋出委外代工訂單</p>
+          <p style="margin-top:6px">• <strong style="color:var(--red)">風險：</strong>台灣製造商在全球 OEM/ODM 談判中可能面臨更大壓力</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sonova -->
+  <div class="tab-panel reveal" id="panel-sonova" style="display:none">
+    <div class="detail-card">
+      <span class="card-badge badge-green">策略轉型</span>
+      <h3>Sonova / Phonak — 營收最高、策略反向收縮</h3>
+      <div class="subtitle">FY 2030/31 目標 CHF 60 億 ｜ 分拆 Consumer Hearing</div>
+
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">FY 24/25 營收</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:65%">CHF 39 億</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">FY 30/31 目標</span>
+          <div class="bar-track"><div class="bar-fill blue" style="width:100%">CHF 60 億</div></div>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>指標</th><th>數據</th></tr></thead>
+          <tbody>
+            <tr><td>HY 25/26 合併營收</td><td class="num">CHF 18.15 億（+4.9% 當地貨幣）</td></tr>
+            <tr><td>Hearing + Audiological Care</td><td class="num" style="color:var(--green)">+7.0%（超市場增速 2 倍）</td></tr>
+            <tr><td>Consumer Hearing</td><td class="num" style="color:var(--red)">-12%（拖累整體）</td></tr>
+            <tr><td>核心 EBIT CAGR 目標</td><td class="num">7-12%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">🏆</span>
+        <div class="callout-text"><strong>產品殊榮：</strong>Infinio Ultra Sphere + Virto R Infinio 獲 2026 AI Excellence Awards；3/5 再獲 iF DESIGN AWARD。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Starkey -->
+  <div class="tab-panel reveal" id="panel-starkey" style="display:none">
+    <div class="detail-card">
+      <span class="card-badge badge-purple">AI 領先</span>
+      <h3>Starkey — 全方位健康生態最完整</h3>
+      <div class="subtitle">Omega AI 平台 ｜ 業界最早完整部署 Auracast</div>
+
+      <h4 style="font-size:.85rem;font-weight:600;margin:20px 0 12px;color:var(--text-secondary)">Omega AI 核心功能</h4>
+      <div class="pill-row">
+        <span class="pill">Auracast Assistant</span>
+        <span class="pill">Google Fast Pair</span>
+        <span class="pill">Push to Talk</span>
+        <span class="pill">TeleHear AI</span>
+        <span class="pill">Gen AI Smart Assistant</span>
+        <span class="pill">跌倒偵測</span>
+        <span class="pill">心率監測</span>
+        <span class="pill">24/7 健康追蹤</span>
+      </div>
+
+      <div class="callout success" style="margin-top:20px">
+        <span class="callout-icon">🔗</span>
+        <div class="callout-text"><strong>生態互通：</strong>Starkey TV 串流器現已可用於 Oticon 或 ReSound 助聽器，反向亦然——品牌忠誠度壁壘正在下降。</div>
+      </div>
+
+      <div class="timeline" style="margin-top:24px">
+        <div class="tl-item">
+          <div class="tl-date">2026/3/24</div>
+          <div class="tl-title">BIG AI Excellence Awards × 2</div>
+          <div class="tl-desc">年度 AI 產品獎（Omega AI）+ CTO 個人獎</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date">2026/3/25</div>
+          <div class="tl-title">Auracast Assistant 完整應用場景解析</div>
+          <div class="tl-desc">官方部落格發布：機場、戲院、會議中心應用</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demant -->
+  <div class="tab-panel reveal" id="panel-demant" style="display:none">
+    <div class="detail-card">
+      <span class="card-badge badge-orange">穩健佈局</span>
+      <h3>Demant / Oticon — 穩健但低調</h3>
+      <div class="subtitle">退出植入式聽力設備，聚焦核心</div>
+      <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.7;margin-top:16px">
+        Demant 已退出 Cochlear Implants 業務，專注傳統助聽器核心。Oticon Intent 在 2026 年評測中維持「最佳全能型」地位，產品力穩定但在 AI 軍備競賽中相對低調。
+      </p>
+    </div>
+  </div>
+
+  <!-- WS Audiology -->
+  <div class="tab-panel reveal" id="panel-wsa" style="display:none">
+    <div class="detail-card">
+      <span class="card-badge badge-red">多品牌矩陣</span>
+      <h3>WS Audiology / Signia + Widex</h3>
+      <div class="subtitle">德丹陣營 ｜ 多品牌覆蓋策略</div>
+      <div class="tbl-wrap" style="margin-top:16px">
+        <table>
+          <thead><tr><th>產品</th><th>定位</th></tr></thead>
+          <tbody>
+            <tr><td>Signia Insio Charge&Go CIC IX</td><td>下一代可充電隱形式，瞄準高階客群</td></tr>
+            <tr><td>Widex Moment Sheer 220</td><td>強調自然聲音品質</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.7;margin-top:16px">
+        WS Audiology 持續以多品牌矩陣覆蓋不同價格帶，穩扎穩打的市場策略。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- AI IMPACT -->
+<section class="section" id="ai">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 02</div>
+    <h2>AI 如何重塑助聽器市場</h2>
+    <p>AI 從「附加功能」升級為「核心標準」，軍備競賽進入白熱化。</p>
+  </div>
+
+  <div class="card-grid reveal">
+    <div class="card accent-blue">
+      <span class="card-badge badge-blue">AI 滲透</span>
+      <h3>35% AI 滲透率</h3>
+      <p>2026 年預估新款助聽器中 35% 搭載 AI 功能；60% 為可充電式。代表技術包含即時環境識別、DNN 降噪、專用 AI 晶片。</p>
+    </div>
+    <div class="card accent-green">
+      <span class="card-badge badge-green">法規環境</span>
+      <h3>FDA AI 指引更新</h3>
+      <p>2026/1/6 FDA 更新準則，明確區分「醫療資訊」與「訊號/模式測量系統」。搭載 AI 的助聽器面臨更嚴格審查，但也是切入高價值市場的門票。</p>
+    </div>
+    <div class="card accent-purple">
+      <span class="card-badge badge-purple">同日獲獎</span>
+      <h3>Phonak & Starkey AI 大獎</h3>
+      <p>2026/3/24 同日獲 BIG AI Excellence Awards。AI 軍備競賽在頂端市場已進入白熱化——無 AI 功能的產品將快速邊緣化。</p>
+    </div>
+  </div>
+
+  <div class="detail-card reveal" style="margin-top:24px">
+    <h3>各大廠 AI 策略比較</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>品牌</th><th>AI 核心技術</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Phonak</strong></td>
+            <td>DEEPSONIC 專用 AI 晶片 + Spheric Speech Clarity 2.0</td>
+            <td>降低 35% 聆聽疲勞，即時語音 / 噪音分離</td>
+          </tr>
+          <tr>
+            <td><strong>Starkey</strong></td>
+            <td>DNN 360° 方向性 + Omega AI + TeleHear AI</td>
+            <td>遠端 AI 調整、Gen AI 助理、Auracast 完整生態</td>
+          </tr>
+          <tr>
+            <td><strong>ReSound</strong></td>
+            <td>AI 環境自適應（評測領先）</td>
+            <td>與 GN AI 平台整合</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDS -->
+<section class="section" id="trends">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 03</div>
+    <h2>市場趨勢</h2>
+    <p>全球助聽器市場規模、區域動態與產品型態演進。</p>
+  </div>
+
+  <div class="detail-card reveal">
+    <h3>市場規模預測</h3>
+    <div class="bar-chart" style="margin-top:20px">
+      <div class="bar-row">
+        <span class="bar-label">2025 現值</span>
+        <div class="bar-track"><div class="bar-fill blue" data-width="51%" style="width:0">$90.8B</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">2030 預估</span>
+        <div class="bar-track"><div class="bar-fill green" data-width="75%" style="width:0">$184.4B</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">2035 預估</span>
+        <div class="bar-track"><div class="bar-fill purple" data-width="100%" style="width:0">$178.7B</div></div>
+      </div>
+    </div>
+    <p style="font-size:.75rem;color:var(--text-tertiary);margin-top:8px">Sources: Grand View Research, ResearchAndMarkets（不同口徑）</p>
+  </div>
+
+  <div class="card-grid reveal">
+    <div class="card accent-blue">
+      <span class="card-badge badge-blue">北美</span>
+      <h3>最大市場</h3>
+      <p>確診聽損人口逾 4,800 萬。OTC 首年 140 萬台，全球線上 640 萬台（+33% YoY）。Costco 等零售通路影響力持續擴大。</p>
+    </div>
+    <div class="card accent-green">
+      <span class="card-badge badge-green">亞太</span>
+      <h3>成長最快</h3>
+      <p>中國廉價品牌線上已佔 30%（+5pp YoY）。南韓市場 $23 億，CAGR 14.5%。印度長期潛力最大。</p>
+    </div>
+    <div class="card accent-orange">
+      <span class="card-badge badge-orange">產品趨勢</span>
+      <h3>六大產品型態趨勢</h3>
+      <div class="pill-row" style="margin-top:8px">
+        <span class="pill">可充電主流化</span>
+        <span class="pill">Auracast / BLE Audio</span>
+        <span class="pill">健康監控整合</span>
+        <span class="pill">OTC 市場爆發</span>
+        <span class="pill">微型化</span>
+        <span class="pill">DTC 直銷</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-card reveal" style="margin-top:24px">
+    <h3>競爭格局變化</h3>
+    <div class="callout warn">
+      <span class="callout-icon">🔄</span>
+      <div class="callout-text"><strong>垂直整合加劇：</strong>Amplifon 收購 GN Hearing = 零售商整合製造商。Costco 已成為助聽器重要通路。中國廉價品牌（Elehar、Yeasound、ORKA）已在 CES 2026 亮相。</div>
+    </div>
+  </div>
+</section>
+
+<!-- STRATEGY -->
+<section class="section" id="strategy">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 04</div>
+    <h2>策略建議</h2>
+    <p>分為短、中、長期行動建議與風險警示。</p>
+  </div>
+
+  <div class="tabs-wrap reveal" id="stratTabs">
+    <button class="tab-btn active" data-stab="short">短期 0-6 月</button>
+    <button class="tab-btn" data-stab="mid">中期 6-18 月</button>
+    <button class="tab-btn" data-stab="long">長期 18+ 月</button>
+    <button class="tab-btn" data-stab="risk">風險警示</button>
+  </div>
+
+  <div class="strat-panel reveal" id="spanel-short">
+    <div class="card-grid">
+      <div class="card accent-green">
+        <span class="card-badge badge-green">機會</span>
+        <h3>夾縫市場定位</h3>
+        <p>中國廉價品牌往上攻、頂級大廠往下滲透，中價位高性價比區間存在戰略空間。建議以「臨床等級品質 + OTC 價格」切入新興市場。</p>
+      </div>
+      <div class="card accent-blue">
+        <span class="card-badge badge-blue">監控</span>
+        <h3>Amplifon 整合期</h3>
+        <p>GN Hearing 與 Amplifon 整合需 2-3 年，這段時間可能是爭取代工訂單的空窗。建議主動接觸 GN Hearing 供應鏈。</p>
+      </div>
+      <div class="card accent-purple">
+        <span class="card-badge badge-purple">追趕</span>
+        <h3>AI 功能補足</h3>
+        <p>Phonak 和 Starkey 在 AI 評測獎項已拉開差距。建議評估 AI 晶片/演算法策略：自研或與 AI 晶片廠合作。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="strat-panel reveal" id="spanel-mid" style="display:none">
+    <div class="card-grid">
+      <div class="card accent-blue">
+        <span class="card-badge badge-blue">生態</span>
+        <h3>Auracast 生態布局</h3>
+        <p>Auracast 將成為公共場所標配，建議旗下產品優先取得 Auracast 相容性認證。</p>
+      </div>
+      <div class="card accent-green">
+        <span class="card-badge badge-green">市場</span>
+        <h3>亞太市場優先</h3>
+        <p>Sonova 已與新加坡 EDB 合作布局亞太。台灣具地理與語言優勢。南韓、印度為高成長市場。</p>
+      </div>
+      <div class="card accent-orange">
+        <span class="card-badge badge-orange">功能</span>
+        <h3>健康監控整合</h3>
+        <p>Starkey 已建立「助聽器=健康追蹤」品牌形象。建議評估心率、跌倒偵測功能的法規門檻與開發成本。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="strat-panel reveal" id="spanel-long" style="display:none">
+    <div class="card-grid">
+      <div class="card accent-purple">
+        <span class="card-badge badge-purple">整合</span>
+        <h3>垂直整合或策略聯盟</h3>
+        <p>若 Amplifon 收購成功，純代工角色將持續被壓縮。建議評估自有品牌、收購小型零售通路、或與零售服務商結盟。</p>
+      </div>
+      <div class="card accent-green">
+        <span class="card-badge badge-green">在地化</span>
+        <h3>新興市場策略</h3>
+        <p>中國 30% 已由低價線上品牌佔據，需差異化。建議東南亞（印尼、越南）作為下一個成長引擎。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="strat-panel reveal" id="spanel-risk" style="display:none">
+    <div class="detail-card">
+      <h3>風險矩陣</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>風險</th><th>等級</th><th>建議應對</th></tr></thead>
+          <tbody>
+            <tr><td>Amplifon 高槓桿收購失敗</td><td class="risk-high">高</td><td>避免此時依賴 Amplifon 為主要客戶</td></tr>
+            <tr><td>中國品牌低價滲透</td><td class="risk-high">高</td><td>加速差異化，不正面競爭中低價市場</td></tr>
+            <tr><td>全球經濟衰退（油價 $150）</td><td class="risk-mid">中</td><td>評估備用成長市場（亞太、拉美）</td></tr>
+            <tr><td>FDA 法規收緊 AI 助聽器</td><td class="risk-mid">中</td><td>提前布局 FDA 510(k) 認證</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RECALL -->
+<section class="section" id="recall">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 05</div>
+    <h2>召回 & 法規動態</h2>
+  </div>
+
+  <div class="detail-card reveal">
+    <span class="card-badge badge-red">FDA Class 2 召回</span>
+    <h3>GN Hearing — 軟體 Bug（590 台）</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>內容</th></tr></thead>
+        <tbody>
+          <tr><td>產品類型</td><td>Behind-the-Ear 掛耳式助聽器</td></tr>
+          <tr><td>受影響數量</td><td class="num">590 台（美國境內）</td></tr>
+          <tr><td>問題描述</td><td>軟體 bug 影響維修工具，導致放大規格偏離（最高 18dB）</td></tr>
+          <tr><td>安全風險</td><td>可能對殘餘聽力造成傷害（尚無傷亡報告）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout danger" style="margin-top:16px">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-text">Amplifon 收購 GN Hearing 後，若整合期間管理鬆散，可能有更多潛在品質/召回風險。</div>
+    </div>
+  </div>
+
+  <div class="detail-card reveal">
+    <h3>FDA 法規時間線</h3>
+    <div class="timeline" style="margin-top:20px">
+      <div class="tl-item">
+        <div class="tl-date">2026/3/20</div>
+        <div class="tl-title">CNPV 試驗計畫</div>
+        <div class="tl-desc">加快高風險醫療器材召回的公共預警速度</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">2026/1/6</div>
+        <div class="tl-title">AI / 穿戴裝置指引更新</div>
+        <div class="tl-desc">明確區分「醫療資訊」vs「訊號/模式測量系統」</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">2026 年初</div>
+        <div class="tl-title">OTC 標籤規範重申</div>
+        <div class="tl-desc">最大輸出 111 dB SPL ｜ 限 18 歲以上 ｜ 僅限輕中度聽損</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ECONOMY -->
+<section class="section" id="economy">
+  <div class="section-header reveal">
+    <div class="eyebrow">Section 06</div>
+    <h2>全球經濟環境</h2>
+    <p>總經核心數據與對助聽器產業的影響。</p>
+  </div>
+
+  <div class="card-grid reveal">
+    <div class="card accent-red">
+      <span class="card-badge badge-red">股市</span>
+      <h3>S&P 500 最差季度</h3>
+      <p>Q1 2026 創 2022 年以來最差季度表現，3 月累計跌逾 10%。市場降息機率從 72% 降至 37%。</p>
+    </div>
+    <div class="card accent-orange">
+      <span class="card-badge badge-orange">原油</span>
+      <h3>布倫特 $112/桶</h3>
+      <p>美伊局勢持續。BlackRock CEO 警告若持續可能達 $150/桶，全球衰退機率極高。</p>
+    </div>
+    <div class="card accent-blue">
+      <span class="card-badge badge-blue">關稅</span>
+      <h3>貿易逆差大幅縮小</h3>
+      <p>美國貿易逆差從 $1,360 億驟降至 $294 億。報復性關稅導致酒類出口下滑 $9,000 萬。</p>
+    </div>
+  </div>
+
+  <div class="detail-card reveal" style="margin-top:24px">
+    <h3>對助聽器產業的總經影響</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>影響面向</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>原物料成本</td><td>油價上漲 → 石化原料、物流成本上升，材料成本壓力加大</td></tr>
+          <tr><td>消費力</td><td>停滯性通膨侵蝕可支配所得，中低價位需求可能增加</td></tr>
+          <tr><td>利率環境</td><td>各國央行若維持高利率，併購融資成本墊高</td></tr>
+          <tr><td>供應鏈</td><td>美伊戰爭若影響蘇伊士運河，歐亞供應鏈可能受干擾</td></tr>
+          <tr><td>美元走勢</td><td>美元強勢對歐洲出口不利，但有利台灣進料成本</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>助聽器競品情報報告 — 2026-04-01 ｜ 資料範圍：2026-03-18 至 2026-04-01</p>
+</footer>
+
+<script>
+// Scroll progress
+const prog = document.getElementById('scrollProg');
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  prog.style.width = (window.scrollY / h * 100) + '%';
+  nav.classList.toggle('scrolled', window.scrollY > 10);
+});
+
+// Nav active state
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav-links a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.15 });
+sections.forEach(s => observer.observe(s));
+
+// Reveal on scroll
+const reveals = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+}, { threshold: 0.08 });
+reveals.forEach(r => revealObs.observe(r));
+
+// Animate bar fills
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.bar-fill[data-width]').forEach(b => { b.style.width = b.dataset.width; });
+      barObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.bar-chart').forEach(c => barObs.observe(c));
+
+// Competitor tabs
+document.querySelectorAll('#compTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#compTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('panel-' + btn.dataset.tab).style.display = 'block';
+  });
+});
+
+// Strategy tabs
+document.querySelectorAll('#stratTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#stratTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.strat-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('spanel-' + btn.dataset.stab).style.display = 'block';
+  });
+});
+
+// Expand toggle
+function toggleExpand(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+</script>
+</body>
+</html>
