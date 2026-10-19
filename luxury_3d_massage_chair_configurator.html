@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHERIA 4D — Luxury Massage Chair Interactive 3D Experience</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Rajdhani for futuristic studio HUD -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js r128 & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --hud-bg: rgba(34, 43, 48, 0.78);
+            --hud-border: rgba(255, 255, 255, 0.22);
+            --hud-active: rgba(56, 189, 248, 0.9);
+            --hud-warm: rgba(249, 115, 22, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 42%, #e6e9ec 0%, #c8cfd6 58%, #9ea7b2 100%);
+            font-family: 'Inter', sans-serif;
+            color: #f8fafc;
+        }
+
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* SVG Leader Lines Layer */
+        #leader-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .leader-polyline {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.85);
+            stroke-width: 1.6;
+            filter: drop-shadow(0px 1px 3px rgba(0, 0, 0, 0.28));
+            transition: stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.25s ease;
+        }
+
+        .leader-polyline.active {
+            stroke: #38bdf8;
+            stroke-width: 2.2;
+        }
+
+        .leader-polyline.heat-active {
+            stroke: #fb923c;
+            stroke-width: 2.2;
+        }
+
+        /* Hotspot Anchor (+) on the 3D Model */
+        .hotspot-anchor {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            margin-left: -17px;
+            margin-top: -17px;
+            border-radius: 9999px;
+            background: rgba(120, 132, 142, 0.55);
+            border: 1.5px solid rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 19px;
+            font-weight: 300;
+            cursor: pointer;
+            z-index: 15;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .hotspot-anchor::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            animation: pulseRing 2.6s infinite cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+
+        .hotspot-anchor:hover {
+            transform: scale(1.16);
+            background: rgba(34, 45, 52, 0.85);
+            border-color: #ffffff;
+        }
+
+        .hotspot-anchor.active {
+            background: rgba(14, 116, 144, 0.88);
+            border-color: #7dd3fc;
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.65);
+        }
+
+        .hotspot-anchor.heat-active {
+            background: rgba(194, 65, 12, 0.88);
+            border-color: #fdba74;
+            box-shadow: 0 0 18px rgba(251, 146, 60, 0.7);
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.88); opacity: 0.85; }
+            70% { transform: scale(1.28); opacity: 0; }
+            100% { transform: scale(1.28); opacity: 0; }
+        }
+
+        /* Floating Callout Cards matching the Reference Image */
+        .hotspot-label {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(39, 51, 56, 0.92) 0%, rgba(27, 36, 40, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 7px;
+            padding: 9px 18px;
+            color: #f1f5f9;
+            font-size: 13.5px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            z-index: 15;
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .hotspot-label:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(47, 62, 68, 0.96) 0%, rgba(32, 43, 48, 0.98) 100%);
+            border-color: rgba(255, 255, 255, 0.38);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+        }
+
+        .hotspot-label.active {
+            border-color: #38bdf8;
+            box-shadow: 0 10px 28px rgba(14, 165, 233, 0.28), inset 0 0 12px rgba(56, 189, 248, 0.16);
+        }
+
+        .hotspot-label.heat-active {
+            border-color: #fb923c;
+            box-shadow: 0 10px 28px rgba(249, 115, 22, 0.3), inset 0 0 12px rgba(251, 146, 60, 0.18);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .hotspot-label.active .status-dot {
+            background: #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+        }
+
+        .hotspot-label.heat-active .status-dot {
+            background: #fb923c;
+            box-shadow: 0 0 8px #fb923c;
+        }
+
+        /* Bottom Glassmorphic HUD Panel */
+        .glass-panel {
+            background: linear-gradient(180deg, rgba(108, 114, 120, 0.68) 0%, rgba(82, 88, 94, 0.78) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 12px;
+        }
+
+        .dark-glass-btn {
+            background: linear-gradient(180deg, rgba(64, 70, 76, 0.9) 0%, rgba(45, 50, 55, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            transition: all 0.2s ease;
+        }
+
+        .dark-glass-btn:hover {
+            background: linear-gradient(180deg, rgba(78, 86, 94, 0.95) 0%, rgba(55, 62, 68, 0.98) 100%);
+            border-color: rgba(255, 255, 255, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .dark-glass-btn.active {
+            background: linear-gradient(180deg, rgba(14, 116, 144, 0.92) 0%, rgba(12, 74, 110, 0.96) 100%);
+            border-color: #7dd3fc;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Color Swatches */
+        .color-swatch {
+            width: 34px;
+            height: 34px;
+            border-radius: 9999px;
+            border: 2px solid rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.selected {
+            border-color: #ffffff;
+            transform: scale(1.14);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.55), 0 4px 10px rgba(0,0,0,0.35);
+        }
+
+        /* Custom Range Slider */
+        input[type=range].recline-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            outline: none;
+        }
+
+        input[type=range].recline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #f8fafc;
+            border: 2px solid #0284c7;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+            transition: transform 0.15s ease;
+        }
+
+        input[type=range].recline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 900px) {
+            .hotspot-label {
+                padding: 6px 11px;
+                font-size: 11.5px;
+            }
+            .hotspot-anchor {
+                width: 28px;
+                height: 28px;
+                margin-left: -14px;
+                margin-top: -14px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- Dynamic SVG Overlay for Hotspot Leader Lines -->
+    <svg id="leader-svg" xmlns="http://www.w3.org/2000/svg">
+        <polyline id="line-recline" class="leader-polyline" points="0,0 0,0 0,0" />
+        <polyline id="line-heat" class="leader-polyline" points="0,0 0,0 0,0" />
+        <polyline id="line-foot" class="leader-polyline" points="0,0 0,0 0,0" />
+        <polyline id="line-airbag" class="leader-polyline" points="0,0 0,0 0,0" />
+        <polyline id="line-armrest" class="leader-polyline" points="0,0 0,0 0,0" />
+    </svg>
+
+    <!-- 3D Hotspot Anchors (+) & Floating Labels -->
+    <div id="hotspots-layer" class="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+        <!-- 1. Recline System -->
+        <div id="anchor-recline" class="hotspot-anchor pointer-events-auto" onclick="triggerHotspot('recline')" title="Toggle Zero-Gravity Recline">+</div>
+        <div id="label-recline" class="hotspot-label pointer-events-auto" onclick="triggerHotspot('recline')">
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-medium tracking-wide">Recline System</div>
+                <div id="sub-recline" class="text-[10px] text-slate-300/80 font-normal">Zero-G Upright (115°)</div>
+            </div>
+        </div>
+
+        <!-- 2. Heat Therapy -->
+        <div id="anchor-heat" class="hotspot-anchor pointer-events-auto" onclick="triggerHotspot('heat')" title="Toggle Lumbar & Seat Infrared Heat">+</div>
+        <div id="label-heat" class="hotspot-label pointer-events-auto" onclick="triggerHotspot('heat')">
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-medium tracking-wide">Heat Therapy</div>
+                <div id="sub-heat" class="text-[10px] text-slate-300/80 font-normal">Graphene IR Standby</div>
+            </div>
+        </div>
+
+        <!-- 3. Foot Roller Control -->
+        <div id="anchor-foot" class="hotspot-anchor pointer-events-auto" onclick="triggerHotspot('foot')" title="Toggle Shiatsu Foot Rollers & Calf Kneading">+</div>
+        <div id="label-foot" class="hotspot-label pointer-events-auto" onclick="triggerHotspot('foot')">
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-medium tracking-wide">Foot Roller Control</div>
+                <div id="sub-foot" class="text-[10px] text-slate-300/80 font-normal">Tri-Zone Reflexology</div>
+            </div>
+        </div>
+
+        <!-- 4. Shoulder & Hip Airbags (Touch Motion Control) -->
+        <div id="anchor-airbag" class="hotspot-anchor pointer-events-auto" onclick="triggerHotspot('airbag')" title="Toggle Shoulder & Hip Airbag Compression">+</div>
+        <div id="label-airbag" class="hotspot-label pointer-events-auto" onclick="triggerHotspot('airbag')">
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-medium tracking-wide">Touch Motion Control</div>
+                <div id="sub-airbag" class="text-[10px] text-slate-300/80 font-normal">64-Cell Airbag Bolsters</div>
+            </div>
+        </div>
+
+        <!-- 5. Adjust Armrest & Tablet -->
+        <div id="anchor-armrest" class="hotspot-anchor pointer-events-auto" onclick="triggerHotspot('armrest')" title="Swivel Touchscreen & Adjust Armrest">+</div>
+        <div id="label-armrest" class="hotspot-label pointer-events-auto" onclick="triggerHotspot('armrest')">
+            <span class="status-dot"></span>
+            <div>
+                <div class="font-medium tracking-wide">Adjust Armrest</div>
+                <div id="sub-armrest" class="text-[10px] text-slate-300/80 font-normal">Articulated Dock & Trim</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top-Left Brand & Telemetry Header -->
+    <div class="pointer-events-none absolute top-4 left-4 right-4 z-30 flex flex-wrap items-start justify-between gap-4">
+        <div class="glass-panel pointer-events-auto px-4 py-2.5 flex items-center gap-4">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-slate-900/80 border border-white/20 flex items-center justify-center shadow-inner">
+                    <svg class="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-['Rajdhani'] font-bold text-lg tracking-wider text-white leading-none">OSAKI AETHERIA</span>
+                        <span class="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-200 font-semibold">4D SL-Track</span>
+                    </div>
+                    <p class="text-[11px] text-slate-200/80">Interactive Studio Configurator • Zero-Gravity Capsule</p>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-2 border-l border-white/20 pl-4 text-xs">
+                <button onclick="setCameraPreset('default')" class="px-2.5 py-1 rounded bg-slate-900/50 hover:bg-slate-800/80 border border-white/15 transition text-slate-100">3/4 Studio</button>
+                <button onclick="setCameraPreset('front')" class="px-2.5 py-1 rounded bg-slate-900/50 hover:bg-slate-800/80 border border-white/15 transition text-slate-100">Front</button>
+                <button onclick="setCameraPreset('side')" class="px-2.5 py-1 rounded bg-slate-900/50 hover:bg-slate-800/80 border border-white/15 transition text-slate-100">Side Profile</button>
+                <button onclick="setCameraPreset('tablet')" class="px-2.5 py-1 rounded bg-slate-900/50 hover:bg-slate-800/80 border border-white/15 transition text-sky-300 font-medium">Tablet UI</button>
+            </div>
+        </div>
+
+        <!-- Live Telemetry Status Pill (Top Right) -->
+        <div class="glass-panel pointer-events-auto px-4 py-2.5 flex items-center gap-5 text-xs">
+            <div>
+                <div class="text-[10px] uppercase tracking-wider text-slate-200/75">Active Program</div>
+                <div id="hud-mode" class="font-semibold text-white flex items-center gap-1.5 mt-0.5">
+                    <span id="hud-pulse" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Deep Tissue Shiatsu</span>
+                </div>
+            </div>
+            <div class="border-l border-white/20 pl-4">
+                <div class="text-[10px] uppercase tracking-wider text-slate-200/75">Recline Angle</div>
+                <div class="flex items-center gap-2 mt-1">
+                    <input id="recline-slider" type="range" min="0" max="100" value="12" class="recline-slider w-20" oninput="onReclineSlider(this.value)">
+                    <span id="recline-readout" class="font-mono text-[11px] font-semibold text-white w-9">118°</span>
+                </div>
+            </div>
+            <div class="border-l border-white/20 pl-4 hidden sm:block">
+                <div class="text-[10px] uppercase tracking-wider text-slate-200/75">Hotspots</div>
+                <button id="toggle-labels-btn" onclick="toggleHotspotsVisibility()" class="mt-0.5 text-sky-300 hover:text-white font-medium transition">Visible</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom HUD Bar matching the Reference Screen Layout -->
+    <div class="pointer-events-none absolute bottom-4 left-4 right-4 z-30 flex flex-wrap items-end justify-between gap-3">
+
+        <!-- Bottom Left: Dual 3D Gizmo & Rotation Controls Card (from reference image) -->
+        <div class="glass-panel pointer-events-auto px-4 py-2.5 flex items-center gap-4">
+            <!-- Left 3D Axis Sphere Gizmo (Interactive: click to orbit 45 deg or reset) -->
+            <button onclick="orbitStep(-Math.PI/4, 0.08)" class="group relative w-16 h-14 flex items-center justify-center rounded-lg hover:bg-white/10 transition" title="Orbit Camera Left / Tilted Axis">
+                <svg class="w-13 h-13" viewBox="0 0 64 64" fill="none">
+                    <!-- Up/Left/Right small arrows -->
+                    <path d="M29 6L32 3L35 6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 44L7 48L11 49" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M55 44L57 48L53 49" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- 3D Gyroscope Rings -->
+                    <ellipse cx="32" cy="32" rx="18" ry="18" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
+                    <ellipse cx="32" cy="32" rx="18" ry="7.5" stroke="#38bdf8" stroke-width="1.8" class="group-hover:stroke-sky-300 transition"/>
+                    <ellipse cx="32" cy="32" rx="8.5" ry="18" transform="rotate(-24 32 32)" stroke="#4ade80" stroke-width="1.6"/>
+                    <ellipse cx="32" cy="32" rx="8.5" ry="18" transform="rotate(28 32 32)" stroke="#60a5fa" stroke-width="1.4" stroke-dasharray="3 2"/>
+                </svg>
+            </button>
+
+            <div class="h-10 w-px bg-white/25"></div>
+
+            <!-- Right 360 Turntable Spin Gizmo -->
+            <button id="btn-turntable" onclick="toggleTurntable()" class="group relative w-16 h-14 flex items-center justify-center rounded-lg hover:bg-white/10 transition" title="Toggle 360° Turntable Rotation">
+                <svg class="w-13 h-13" viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="32" r="9" fill="rgba(255,255,255,0.65)" />
+                    <!-- Horizontal Orbit Arrow -->
+                    <path d="M11 30C11 35 20 39 32 39C44 39 53 35 53 30C53 26.5 47 23.5 39 22.3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M49 26L53.5 29.5L48.5 33" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 26L10.5 29.5L15.5 33" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Vertical Orbit Arcs -->
+                    <path d="M28 11C31 11 34 15 35 21" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M27 14L28 10L32 12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M28 53C31 53 34 49 35 43" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M31 50L34 54L37 50" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Bottom Right Controls Group (Explore in AR / X-Ray, Color Samples, Play Animation) -->
+        <div class="flex flex-wrap items-stretch gap-3 pointer-events-auto">
+
+            <!-- EXPLORE IN AR / X-RAY ROLLER VIEW -->
+            <div class="glass-panel px-4 py-2.5 flex items-center">
+                <button id="btn-xray" onclick="toggleXRayMode()" class="dark-glass-btn px-4 py-2.5 rounded-lg flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-white">
+                    <svg class="w-4 h-4 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span id="xray-btn-text">EXPLORE IN AR / X-RAY</span>
+                </button>
+            </div>
+
+            <!-- COLOR SAMPLES -->
+            <div class="glass-panel px-5 py-2 flex flex-col justify-between min-w-[175px]">
+                <div class="text-[11px] font-semibold tracking-wider uppercase text-white/90 mb-1.5">COLOR SAMPLES</div>
+                <div class="flex items-center gap-3.5">
+                    <!-- Pearl White -->
+                    <button id="swatch-pearl" onclick="setColorTheme('pearl')" class="color-swatch selected" style="background: linear-gradient(135deg, #f5f5f3 0%, #d4d4d0 100%);" title="Pearl White & Warm Taupe"></button>
+                    <!-- Obsidian Black -->
+                    <button id="swatch-obsidian" onclick="setColorTheme('obsidian')" class="color-swatch" style="background: linear-gradient(135deg, #26292e 0%, #111317 100%);" title="Obsidian Black & Charcoal"></button>
+                    <!-- Espresso Brown -->
+                    <button id="swatch-espresso" onclick="setColorTheme('espresso')" class="color-swatch" style="background: linear-gradient(135deg, #6e472b 0%, #3d2514 100%);" title="Espresso Saddle & Cream"></button>
+                </div>
+            </div>
+
+            <!-- PLAY ANIMATION -->
+            <div class="glass-panel px-5 py-2 flex flex-col justify-between">
+                <div class="text-[11px] font-semibold tracking-wider uppercase text-white/90 mb-1.5">PLAY ANIMATION</div>
+                <button id="btn-play-anim" onclick="toggleFullAnimation()" class="dark-glass-btn px-4 py-2 rounded-lg flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-white">
+                    <svg id="play-icon" class="w-3.5 h-3.5 fill-current text-white" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span id="play-btn-text">PLAY ANIMATION</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Subtle Bottom-Center Interactive Hint Toast -->
+    <div id="toast-banner" class="pointer-events-none fixed bottom-24 left-1/2 -translate-x-1/2 z-30 transition-all duration-300 opacity-0 translate-y-2">
+        <div class="bg-slate-900/90 border border-sky-400/40 text-white px-4 py-2 rounded-full text-xs font-medium shadow-xl backdrop-blur-md flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+            <span id="toast-text">Zero-Gravity Recline Activated</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // 1. GLOBAL STATE & CONFIGURATION
+        // ============================================================================
+        let scene, camera, renderer, controls, clock;
+        let chairRoot, reclinePivot, backrestGroup, legrestPivot, seatCushionMesh, lumbarHeatMesh;
+        let leftArmGroup, rightArmGroup, tabletSwivelGroup, tabletScreenMesh;
+        let shoulderBolsters = [], hipBolsters = [], calfBolsters = [], footRollerMeshes = [];
+        let internalRollerGroup, internalTrackLine;
+        let leatherMeshes = [], accentLeatherMeshes = [], shellMeshes = [], woodTrimMeshes = [];
+
+        // Materials shared for real-time configurator updates
+        let matPrimaryLeather, matSecondaryLeather, matOuterShell, matDarkWoodTrim, matChromeTrim, matTabletScreen;
+        let tabletCanvas, tabletCtx, tabletTexture;
+
+        // Interactive Feature States
+        const appState = {
+            reclineActive: false,
+            reclineTarget: 0.12,   // 0 = upright, 1 = full zero-gravity recline
+            reclineCurrent: 0.12,
+            heatActive: false,
+            heatIntensity: 0,
+            footRollerActive: false,
+            airbagActive: false,
+            armrestAdjusted: false,
+            armrestProgress: 0,
+            fullDemoPlaying: false,
+            turntableActive: false,
+            xrayActive: false,
+            hotspotsVisible: true,
+            colorTheme: 'pearl',
+            cameraTween: null
+        };
+
+        // Color Palettes matching luxury massage chairs
+        const COLOR_THEMES = {
+            pearl: {
+                name: 'Pearl White',
+                primaryLeather: 0xeae8e3,   // Soft warm off-white plush leather
+                secondaryLeather: 0x999893, // Warm grey/taupe inner bolsters (exact match to photo)
+                outerShell: 0xefeee9,       // Satin pearl shell
+                woodTrim: 0x242220          // Dark espresso/ebony wood trim on armrests
+            },
+            obsidian: {
+                name: 'Obsidian Black',
+                primaryLeather: 0x1e2024,   // Deep stealth black Nappa leather
+                secondaryLeather: 0x383c42, // Charcoal grey inner bolsters
+                outerShell: 0x181a1d,       // Matte carbon shell
+                woodTrim: 0x111214          // Piano black trim
+            },
+            espresso: {
+                name: 'Espresso Saddle',
+                primaryLeather: 0x5c3a24,   // Rich saddle brown leather
+                secondaryLeather: 0x3b2416, // Deep cocoa inner bolsters
+                outerShell: 0xdcd7ce,       // Warm champagne cream outer shell
+                woodTrim: 0x2b180c          // Burl walnut trim
+            }
+        };
+
+        // Hotspot definitions (3D local anchor objects will be attached during chair build)
+        const hotspots = {
+            recline: {
+                anchorObj: null,
+                anchorEl: null,
+                labelEl: null,
+                lineEl: null,
+                subEl: null,
+                // Relative screen offset from projected 3D point to match the reference monitor layout
+                offset: { x: -185, y: -90 },
+                elbowOffset: { x: -55, y: -62 }
+            },
+            heat: {
+                anchorObj: null,
+                anchorEl: null,
+                labelEl: null,
+                lineEl: null,
+                subEl: null,
+                offset: { x: -245, y: -62 },
+                elbowOffset: { x: -85, y: -62 }
+            },
+            foot: {
+                anchorObj: null,
+                anchorEl: null,
+                labelEl: null,
+                lineEl: null,
+                subEl: null,
+                offset: { x: -210, y: -14 },
+                elbowOffset: { x: -65, y: -14 }
+            },
+            airbag: {
+                anchorObj: null,
+                anchorEl: null,
+                labelEl: null,
+                lineEl: null,
+                subEl: null,
+                offset: { x: 155, y: -4 },
+                elbowOffset: { x: 65, y: -4 }
+            },
+            armrest: {
+                anchorObj: null,
+                anchorEl: null,
+                labelEl: null,
+                lineEl: null,
+                subEl: null,
+                offset: { x: 185, y: 58 },
+                elbowOffset: { x: 75, y: 58 }
+            }
+        };
+
+        // ============================================================================
+        // 2. PROCEDURAL TEXTURES (LEATHER GRAIN, WOOD, FLOOR GRID & TABLET UI)
+        // ============================================================================
+        function createLeatherBumpTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(0, 0, 256, 256);
+
+            const imgData = ctx.getImageData(0, 0, 256, 256);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const grain = 128 + (Math.random() - 0.5) * 38;
+                data[i] = grain;
+                data[i + 1] = grain;
+                data[i + 2] = grain;
+                data[i + 3] = 255;
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(12, 12);
+            return tex;
+        }
+
+        function createStudioFloorTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#dcdfe3';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Subtle architectural tile grid lines like the reference image
+            ctx.strokeStyle = 'rgba(150, 158, 168, 0.32)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, 512, 512);
+
+            ctx.strokeStyle = 'rgba(160, 168, 178, 0.14)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(256, 0); ctx.lineTo(256, 512);
+            ctx.moveTo(0, 256); ctx.lineTo(512, 256);
+            ctx.stroke();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(16, 16);
+            return tex;
+        }
+
+        function createSoftShadowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createRadialGradient(256, 256, 30, 256, 256, 240);
+            grad.addColorStop(0, 'rgba(15, 20, 26, 0.62)');
+            grad.addColorStop(0.45, 'rgba(20, 26, 34, 0.32)');
+            grad.addColorStop(0.78, 'rgba(30, 38, 46, 0.08)');
+            grad.addColorStop(1, 'rgba(30, 38, 46, 0.0)');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 512);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function initTabletDisplayCanvas() {
+            tabletCanvas = document.createElement('canvas');
+            tabletCanvas.width = 512;
+            tabletCanvas.height = 384;
+            tabletCtx = tabletCanvas.getContext('2d');
+            tabletTexture = new THREE.CanvasTexture(tabletCanvas);
+            updateTabletDisplay(0);
+        }
+
+        function updateTabletDisplay(time) {
+            if (!tabletCtx) return;
+            const ctx = tabletCtx;
+            const w = tabletCanvas.width;
+            const h = tabletCanvas.height;
+
+            // Dark futuristic medical/massage UI background
+            const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+            bgGrad.addColorStop(0, '#090d16');
+            bgGrad.addColorStop(1, '#111c2d');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Top header bar
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+            ctx.fillRect(20, 18, w - 40, 36);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 16px Inter, sans-serif';
+            ctx.fillText('OSAKI 4D BODY SCAN', 34, 41);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '13px monospace';
+            const min = Math.floor(19 - (time % 600) / 60);
+            const sec = Math.floor(59 - (time % 60));
+            ctx.fillText(`TIME ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`, w - 120, 41);
+
+            // Draw glowing spine silhouette in center-left
+            const cx = 175;
+            const cy = 205;
+
+            // Spine vertebrae nodes
+            for (let i = 0; i < 14; i++) {
+                const t = i / 13;
+                const y = 85 + t * 225;
+                const curveX = cx + Math.sin(t * Math.PI * 1.8) * 14;
+
+                // Active roller position along spine
+                const rollerPos = (Math.sin(time * 2.2) * 0.5 + 0.5);
+                const dist = Math.abs(t - rollerPos);
+
+                if (appState.heatActive && t > 0.55 && t < 0.88) {
+                    ctx.fillStyle = '#fb923c';
+                    ctx.shadowColor = '#f97316';
+                    ctx.shadowBlur = 12;
+                } else if (dist < 0.14) {
+                    ctx.fillStyle = '#facc15';
+                    ctx.shadowColor = '#eab308';
+                    ctx.shadowBlur = 14;
+                } else {
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowColor = '#0284c7';
+                    ctx.shadowBlur = 4;
+                }
+
+                ctx.beginPath();
+                ctx.arc(curveX - 10, y, 5.5, 0, Math.PI * 2);
+                ctx.arc(curveX + 10, y, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+
+            // Right side telemetry cards on tablet
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(275, 80, 210, 82);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText('4D SHIATSU ROLLERS', 290, 106);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillText(appState.reclineActive ? 'Mode: Zero-Gravity Deep' : 'Mode: Lumbar & Neck', 290, 130);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Angle: ${Math.round(115 + appState.reclineCurrent * 50)}°`, 290, 150);
+
+            // Thermal & Airbag status box on tablet
+            ctx.strokeRect(275, 178, 210, 82);
+            ctx.fillStyle = appState.heatActive ? '#fb923c' : '#94a3b8';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText(appState.heatActive ? 'IR HEAT: 44°C ACTIVE' : 'IR HEAT: STANDBY', 290, 204);
+
+            ctx.fillStyle = appState.airbagActive ? '#4ade80' : '#94a3b8';
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillText(appState.airbagActive ? 'Airbags: Pulsing (Lvl 4)' : 'Airbags: Balanced', 290, 228);
+
+            ctx.fillStyle = appState.footRollerActive ? '#38bdf8' : '#94a3b8';
+            ctx.fillText(appState.footRollerActive ? 'Foot Rollers: Active RPM' : 'Foot Rollers: Ready', 290, 248);
+
+            // Bottom progress bar on tablet
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(275, 285, 210, 12);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(275, 285, 210 * (0.35 + 0.6 * (Math.sin(time * 0.8) * 0.5 + 0.5)), 12);
+
+            tabletTexture.needsUpdate = true;
+        }
+
+        // ============================================================================
+        // 3. GEOMETRY HELPERS FOR SMOOTH BEVELED CUSHIONS & SHELLS
+        // ============================================================================
+        function createRoundedBoxGeometry(width, height, depth, radius, smoothness = 6) {
+            const shape = new THREE.Shape();
+            const eps = 0.00001;
+            const r = Math.min(radius, width / 2, height / 2) - eps;
+            const w = width - r * 2;
+            const h = height - r * 2;
+
+            shape.absarc(eps, eps, eps, -Math.PI / 2, -Math.PI, true);
+            shape.absarc(eps, h, eps, Math.PI, Math.PI / 2, true);
+            shape.absarc(w, h, eps, Math.PI / 2, 0, true);
+            shape.absarc(w, eps, eps, 0, -Math.PI / 2, true);
+
+            const geometry = new THREE.ExtrudeGeometry(shape, {
+                depth: Math.max(0.001, depth - radius * 2),
+                bevelEnabled: true,
+                bevelSegments: smoothness * 2,
+                steps: 1,
+                bevelSize: r,
+                bevelThickness: radius,
+                curveSegments: smoothness * 2
+            });
+
+            geometry.center();
+            return geometry;
+        }
+
+        // Creates a custom curved profile extrusion (great for sculpted side panels & curved base)
+        function createSculptedProfileGeometry(points2D, depth, bevelSize = 0.035, bevelThickness = 0.035) {
+            const shape = new THREE.Shape();
+            shape.moveTo(points2D[0][0], points2D[0][1]);
+            for (let i = 1; i < points2D.length; i++) {
+                const pt = points2D[i];
+                if (pt.length === 4) {
+                    shape.quadraticCurveTo(pt[0], pt[1], pt[2], pt[3]);
+                } else {
+                    shape.lineTo(pt[0], pt[1]);
+                }
+            }
+            shape.closePath();
+
+            const geo = new THREE.ExtrudeGeometry(shape, {
+                depth: depth,
+                bevelEnabled: true,
+                bevelSegments: 8,
+                steps: 2,
+                bevelSize: bevelSize,
+                bevelThickness: bevelThickness,
+                curveSegments: 24
+            });
+            geo.center();
+            return geo;
+        }
+
+        // ============================================================================
+        // 4. BUILD THE LUXURY MASSAGE CHAIR 3D MODEL
+        // ============================================================================
+        function buildMassageChair() {
+            chairRoot = new THREE.Group();
+            // Slightly angle the chair or keep it centered facing +Z (camera is placed at front-left 3/4 view matching reference photo)
+            scene.add(chairRoot);
+
+            const leatherBump = createLeatherBumpTexture();
+            const theme = COLOR_THEMES[appState.colorTheme];
+
+            // 1. Initialize PBR Materials
+            matPrimaryLeather = new THREE.MeshPhysicalMaterial({
+                color: theme.primaryLeather,
+                roughness: 0.42,
+                metalness: 0.04,
+                bumpMap: leatherBump,
+                bumpScale: 0.0035,
+                clearcoat: 0.12,
+                clearcoatRoughness: 0.45
+            });
+
+            matSecondaryLeather = new THREE.MeshPhysicalMaterial({
+                color: theme.secondaryLeather,
+                roughness: 0.5,
+                metalness: 0.05,
+                bumpMap: leatherBump,
+                bumpScale: 0.004,
+                clearcoat: 0.08
+            });
+
+            matOuterShell = new THREE.MeshPhysicalMaterial({
+                color: theme.outerShell,
+                roughness: 0.24,
+                metalness: 0.08,
+                clearcoat: 0.55,
+                clearcoatRoughness: 0.18
+            });
+
+            matDarkWoodTrim = new THREE.MeshPhysicalMaterial({
+                color: theme.woodTrim,
+                roughness: 0.22,
+                metalness: 0.1,
+                clearcoat: 0.75,
+                clearcoatRoughness: 0.15
+            });
+
+            matChromeTrim = new THREE.MeshStandardMaterial({
+                color: 0xd8dee6,
+                roughness: 0.18,
+                metalness: 0.88
+            });
+
+            const matDarkFrame = new THREE.MeshStandardMaterial({
+                color: 0x1e2229,
+                roughness: 0.45,
+                metalness: 0.5
+            });
+
+            initTabletDisplayCanvas();
+            matTabletScreen = new THREE.MeshBasicMaterial({
+                map: tabletTexture
+            });
+
+            // ------------------------------------------------------------------------
+            // A. SLEEK CURVED BASE & METALLIC SILVER TRIM
+            // ------------------------------------------------------------------------
+            const baseGroup = new THREE.Group();
+            chairRoot.add(baseGroup);
+
+            // Floor skid plate (flared rear and mid base like the photo)
+            const baseFlangeGeo = createRoundedBoxGeometry(1.06, 0.09, 1.38, 0.035, 6);
+            const baseFlange = new THREE.Mesh(baseFlangeGeo, matOuterShell);
+            baseFlange.position.set(0, 0.055, -0.1);
+            baseFlange.castShadow = true;
+            baseFlange.receiveShadow = true;
+            baseGroup.add(baseFlange);
+            shellMeshes.push(baseFlange);
+
+            // Rubber floor feet
+            [-0.44, 0.44].forEach(x => {
+                [-0.62, 0.42].forEach(z => {
+                    const foot = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.05, 0.06, 0.025, 16),
+                        matDarkFrame
+                    );
+                    foot.position.set(x, 0.012, z);
+                    baseGroup.add(foot);
+                });
+            });
+
+            // Sculpted boat-like lower pedestal riser
+            const riserPoints = [
+                [-0.65, 0.0],
+                [0.45, 0.0],
+                [0.52, 0.15, 0.48, 0.36],
+                [-0.45, 0.36],
+                [-0.68, 0.18, -0.65, 0.0]
+            ];
+            const riserGeo = createSculptedProfileGeometry(riserPoints, 0.88, 0.04, 0.04);
+            riserGeo.rotateY(Math.PI / 2); // Orient along Z
+            const riserMesh = new THREE.Mesh(riserGeo, matOuterShell);
+            riserMesh.position.set(0, 0.24, -0.05);
+            riserMesh.castShadow = true;
+            riserMesh.receiveShadow = true;
+            baseGroup.add(riserMesh);
+            shellMeshes.push(riserMesh);
+
+            // Signature Brushed Silver Diagonal Trim Strip along the lower base (prominent in photo)
+            const trimStripGeo = createRoundedBoxGeometry(0.95, 0.055, 1.12, 0.015, 4);
+            const trimStrip = new THREE.Mesh(trimStripGeo, matChromeTrim);
+            trimStrip.position.set(0, 0.22, -0.02);
+            trimStrip.rotation.x = 0.12;
+            baseGroup.add(trimStrip);
+
+            // ------------------------------------------------------------------------
+            // B. DEEP CONTOURED SEAT & RECLINE PIVOT ASSEMBLY
+            // ------------------------------------------------------------------------
+            reclinePivot = new THREE.Group();
+            reclinePivot.position.set(0, 0.56, 0.02);
+            chairRoot.add(reclinePivot);
+
+            // Seat Frame Cradle
+            const seatFrame = new THREE.Mesh(
+                createRoundedBoxGeometry(0.76, 0.12, 0.72, 0.04, 5),
+                matOuterShell
+            );
+            seatFrame.position.set(0, -0.06, 0.08);
+            reclinePivot.add(seatFrame);
+            shellMeshes.push(seatFrame);
+
+            // Plush Segmented Seat Cushion (front thigh pad + rear glute pad)
+            const seatFrontGeo = createRoundedBoxGeometry(0.68, 0.13, 0.34, 0.05, 6);
+            seatCushionMesh = new THREE.Mesh(seatFrontGeo, matPrimaryLeather);
+            seatCushionMesh.position.set(0, 0.03, 0.26);
+            seatCushionMesh.rotation.x = -0.06;
+            seatCushionMesh.castShadow = true;
+            seatCushionMesh.receiveShadow = true;
+            reclinePivot.add(seatCushionMesh);
+            leatherMeshes.push(seatCushionMesh);
+
+            const seatRearGeo = createRoundedBoxGeometry(0.68, 0.13, 0.36, 0.05, 6);
+            const seatRearMesh = new THREE.Mesh(seatRearGeo, matPrimaryLeather);
+            seatRearMesh.position.set(0, 0.01, -0.06);
+            seatRearMesh.rotation.x = 0.04;
+            seatRearMesh.castShadow = true;
+            seatRearMesh.receiveShadow = true;
+            reclinePivot.add(seatRearMesh);
+            leatherMeshes.push(seatRearMesh);
+
+            // Inner Hip / Pelvis Airbag Cushions (Taupe/Grey contrast pads on left & right of seat, matching photo)
+            [-1, 1].forEach(side => {
+                const hipGroup = new THREE.Group();
+                hipGroup.position.set(side * 0.33, 0.17, 0.14);
+                hipGroup.rotation.z = side * -0.15;
+                hipGroup.rotation.y = side * -0.06;
+
+                const hipPadGeo = createRoundedBoxGeometry(0.11, 0.28, 0.42, 0.045, 6);
+                const hipPad = new THREE.Mesh(hipPadGeo, matSecondaryLeather);
+                hipPad.castShadow = true;
+                hipPad.receiveShadow = true;
+                hipGroup.add(hipPad);
+                accentLeatherMeshes.push(hipPad);
+
+                reclinePivot.add(hipGroup);
+                hipBolsters.push({ group: hipGroup, side: side, baseX: side * 0.33 });
+            });
+
+            // Hotspot 2 Anchor: Heat Therapy (attached to right hip/lumbar cushion matching photo)
+            const heatAnchor = new THREE.Object3D();
+            heatAnchor.position.set(-0.27, 0.19, 0.16);
+            reclinePivot.add(heatAnchor);
+            hotspots.heat.anchorObj = heatAnchor;
+
+            // ------------------------------------------------------------------------
+            // C. ARTICULATED BACKREST, HEADREST PILLOW & SHOULDER BOLSTERS
+            // ------------------------------------------------------------------------
+            backrestGroup = new THREE.Group();
+            backrestGroup.position.set(0, 0.04, -0.22);
+            backrestGroup.rotation.x = -0.34; // Default comfortable lounge angle
+            reclinePivot.add(backrestGroup);
+
+            // Outer Curved Back Shell
+            const backShellGeo = createRoundedBoxGeometry(0.92, 1.24, 0.24, 0.09, 6);
+            const backShell = new THREE.Mesh(backShellGeo, matOuterShell);
+            backShell.position.set(0, 0.58, -0.11);
+            backShell.castShadow = true;
+            backShell.receiveShadow = true;
+            backrestGroup.add(backShell);
+            shellMeshes.push(backShell);
+
+            // Upper Hood / Capsule Collar Wraparound (with silver inner trim like photo)
+            [-1, 1].forEach(side => {
+                const hoodWingGeo = createRoundedBoxGeometry(0.16, 0.54, 0.36, 0.06, 6);
+                const hoodWing = new THREE.Mesh(hoodWingGeo, matOuterShell);
+                hoodWing.position.set(side * 0.44, 0.88, 0.04);
+                hoodWing.rotation.z = side * 0.06;
+                hoodWing.rotation.y = side * -0.18;
+                hoodWing.castShadow = true;
+                hoodWing.receiveShadow = true;
+                backrestGroup.add(hoodWing);
+                shellMeshes.push(hoodWing);
+
+                // Silver accent arc inside upper wing
+                const silverArc = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.04, 0.42, 0.28, 0.015, 4),
+                    matChromeTrim
+                );
+                silverArc.position.set(side * 0.37, 0.88, 0.09);
+                silverArc.rotation.y = side * -0.18;
+                backrestGroup.add(silverArc);
+            });
+
+            // Segmented Plush Backrest Cushions (Lumbar, Thoracic, and Center Spine Channel)
+            // 1. Lower Lumbar Bolster (Warm infrared heat glow target)
+            const lumbarMat = matPrimaryLeather.clone();
+            const lumbarGeo = createRoundedBoxGeometry(0.58, 0.32, 0.16, 0.06, 6);
+            lumbarHeatMesh = new THREE.Mesh(lumbarGeo, lumbarMat);
+            lumbarHeatMesh.position.set(0, 0.22, 0.04);
+            lumbarHeatMesh.castShadow = true;
+            lumbarHeatMesh.receiveShadow = true;
+            backrestGroup.add(lumbarHeatMesh);
+            leatherMeshes.push(lumbarHeatMesh);
+
+            // 2. Left & Right Contoured Thoracic Back Pads (with center spine seam like photo)
+            [-1, 1].forEach(side => {
+                const backPadGeo = createRoundedBoxGeometry(0.27, 0.48, 0.15, 0.055, 6);
+                const backPad = new THREE.Mesh(backPadGeo, matPrimaryLeather);
+                backPad.position.set(side * 0.145, 0.56, 0.03);
+                backPad.rotation.z = side * -0.03;
+                backPad.castShadow = true;
+                backPad.receiveShadow = true;
+                backrestGroup.add(backPad);
+                leatherMeshes.push(backPad);
+            });
+
+            // 3. Thick Contoured Headrest Pillow (with side bolster ridges matching photo)
+            const headrestGroup = new THREE.Group();
+            headrestGroup.position.set(0, 0.92, 0.09);
+            headrestGroup.rotation.x = 0.14;
+            backrestGroup.add(headrestGroup);
+
+            const mainPillowGeo = createRoundedBoxGeometry(0.52, 0.44, 0.15, 0.065, 6);
+            const mainPillow = new THREE.Mesh(mainPillowGeo, matPrimaryLeather);
+            mainPillow.castShadow = true;
+            mainPillow.receiveShadow = true;
+            headrestGroup.add(mainPillow);
+            leatherMeshes.push(mainPillow);
+
+            // Fluted side piping on the headrest pillow
+            [-1, 1].forEach(side => {
+                const pillowPiping = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.09, 0.40, 0.16, 0.04, 5),
+                    matPrimaryLeather
+                );
+                pillowPiping.position.set(side * 0.22, 0, 0.02);
+                pillowPiping.rotation.y = side * -0.25;
+                headrestGroup.add(pillowPiping);
+                leatherMeshes.push(pillowPiping);
+            });
+
+            // Hotspot 1 Anchor: Recline System (Centered on the plush headrest pillow)
+            const reclineAnchor = new THREE.Object3D();
+            reclineAnchor.position.set(0.02, 0.0, 0.09);
+            headrestGroup.add(reclineAnchor);
+            hotspots.recline.anchorObj = reclineAnchor;
+
+            // 4. Dual-Layer Shoulder Airbag Bolsters (Left & Right upper torso clamps)
+            [-1, 1].forEach(side => {
+                const shoulderGroup = new THREE.Group();
+                shoulderGroup.position.set(side * 0.38, 0.58, 0.13);
+                shoulderGroup.rotation.y = side * -0.35;
+
+                // Outer leather wing
+                const outerWing = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.11, 0.46, 0.28, 0.045, 6),
+                    matPrimaryLeather
+                );
+                outerWing.castShadow = true;
+                shoulderGroup.add(outerWing);
+                leatherMeshes.push(outerWing);
+
+                // Inner contrast grey airbag pad
+                const innerPad = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.08, 0.42, 0.24, 0.035, 5),
+                    matSecondaryLeather
+                );
+                innerPad.position.set(side * -0.035, 0, 0.01);
+                shoulderGroup.add(innerPad);
+                accentLeatherMeshes.push(innerPad);
+
+                backrestGroup.add(shoulderGroup);
+                shoulderBolsters.push({ group: shoulderGroup, side: side, baseRotY: side * -0.35 });
+
+                // Attach Hotspot 4 ("Touch Motion Control / Airbags") to the left-side bolster (viewer's right, matching photo)
+                if (side === 1) {
+                    const airbagAnchor = new THREE.Object3D();
+                    airbagAnchor.position.set(0.0, 0.02, 0.12);
+                    shoulderGroup.add(airbagAnchor);
+                    hotspots.airbag.anchorObj = airbagAnchor;
+                }
+            });
+
+            // ------------------------------------------------------------------------
+            // D. INTERNAL 4D SL-TRACK ROLLER MECHANISM (Visible in X-Ray / Demo Mode)
+            // ------------------------------------------------------------------------
+            internalRollerGroup = new THREE.Group();
+            internalRollerGroup.position.set(0, 0.5, 0.0);
+            internalRollerGroup.visible = false;
+            backrestGroup.add(internalRollerGroup);
+
+            const rollerBar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, 0.36, 16),
+                matChromeTrim
+            );
+            rollerBar.rotation.z = Math.PI / 2;
+            internalRollerGroup.add(rollerBar);
+
+            const matGlowingRoller = new THREE.MeshStandardMaterial({
+                color: 0x38bdf8,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.9,
+                roughness: 0.2
+            });
+
+            [-0.14, 0.14].forEach(x => {
+                [-0.05, 0.05].forEach(y => {
+                    const wheel = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.042, 16, 16),
+                        matGlowingRoller
+                    );
+                    wheel.position.set(x, y, 0.04);
+                    internalRollerGroup.add(wheel);
+                });
+            });
+
+            // ------------------------------------------------------------------------
+            // E. ARTICULATED SIDE ENCLOSURES, ARMRESTS, WOOD TRIM & TABLET CONTROLLER
+            // ------------------------------------------------------------------------
+            [-1, 1].forEach(side => {
+                const armGroup = new THREE.Group();
+                // side = -1 is Chair's Right (Viewer's Left, holding the tablet!)
+                // side = +1 is Chair's Left (Viewer's Right, with wood trim & badge!)
+                armGroup.position.set(side * 0.48, 0.56, 0.05);
+                chairRoot.add(armGroup);
+
+                if (side === -1) rightArmGroup = armGroup;
+                else leftArmGroup = armGroup;
+
+                // 1. Lower Sculpted Side Enclosure Panel
+                const lowerPanelPoints = [
+                    [-0.48, -0.36],
+                    [0.44, -0.36],
+                    [0.56, 0.08],
+                    [-0.36, 0.12]
+                ];
+                const lowerPanelGeo = createSculptedProfileGeometry(lowerPanelPoints, 0.15, 0.04, 0.04);
+                lowerPanelGeo.rotateY(Math.PI / 2);
+                const lowerPanel = new THREE.Mesh(lowerPanelGeo, matOuterShell);
+                lowerPanel.position.set(0, -0.1, 0.04);
+                lowerPanel.castShadow = true;
+                lowerPanel.receiveShadow = true;
+                armGroup.add(lowerPanel);
+                shellMeshes.push(lowerPanel);
+
+                // 2. Upper Swept Armrest Housing
+                const upperArmPoints = [
+                    [-0.46, 0.04],
+                    [0.54, 0.02],
+                    [0.62, 0.14, 0.50, 0.23],
+                    [-0.38, 0.28]
+                ];
+                const upperArmGeo = createSculptedProfileGeometry(upperArmPoints, 0.19, 0.045, 0.045);
+                upperArmGeo.rotateY(Math.PI / 2);
+                const upperArm = new THREE.Mesh(upperArmGeo, matOuterShell);
+                upperArm.position.set(0, 0.12, 0.04);
+                upperArm.castShadow = true;
+                upperArm.receiveShadow = true;
+                armGroup.add(upperArm);
+                shellMeshes.push(upperArm);
+
+                // 3. Inner Armrest Hand Tunnel / Airbag Pocket
+                const armPocket = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.08, 0.11, 0.62, 0.03, 5),
+                    matSecondaryLeather
+                );
+                armPocket.position.set(side * -0.06, 0.14, 0.06);
+                armGroup.add(armPocket);
+                accentLeatherMeshes.push(armPocket);
+
+                // 4. Dark Wood / Matte Black Top Trim Cap on Armrest (Prominent in photo)
+                const trimCapGeo = createRoundedBoxGeometry(0.16, 0.055, 0.68, 0.022, 6);
+                const trimCap = new THREE.Mesh(trimCapGeo, matDarkWoodTrim);
+                trimCap.position.set(0, 0.27, 0.16);
+                trimCap.rotation.x = 0.07;
+                trimCap.castShadow = true;
+                armGroup.add(trimCap);
+                woodTrimMeshes.push(trimCap);
+
+                // 5. Subtle Metallic Brand Badge on the outer side panel
+                const badge = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.02, 0.04, 0.16, 0.006, 3),
+                    matChromeTrim
+                );
+                badge.position.set(side * 0.115, 0.12, 0.16);
+                armGroup.add(badge);
+
+                // Attach Hotspot 5 ("Adjust Armrest") to the viewer's right armrest (side === 1)
+                if (side === 1) {
+                    const armrestAnchor = new THREE.Object3D();
+                    armrestAnchor.position.set(0.0, 0.28, 0.22);
+                    armGroup.add(armrestAnchor);
+                    hotspots.armrest.anchorObj = armrestAnchor;
+                }
+
+                // 6. Touchscreen Tablet Controller & Articulated Mounting Arm on Right Armrest (side === -1)
+                if (side === -1) {
+                    tabletSwivelGroup = new THREE.Group();
+                    tabletSwivelGroup.position.set(0.0, 0.29, 0.02);
+                    armGroup.add(tabletSwivelGroup);
+
+                    // Cylindrical base socket on armrest
+                    const mountBase = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.045, 0.055, 0.06, 20),
+                        matDarkFrame
+                    );
+                    mountBase.position.set(0, 0.02, 0);
+                    tabletSwivelGroup.add(mountBase);
+
+                    // Vertical lower stem
+                    const stem1 = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.022, 0.022, 0.12, 16),
+                        matDarkFrame
+                    );
+                    stem1.position.set(0, 0.09, 0);
+                    tabletSwivelGroup.add(stem1);
+
+                    // Angled horizontal boom arm
+                    const boomArm = new THREE.Mesh(
+                        createRoundedBoxGeometry(0.036, 0.036, 0.26, 0.01, 4),
+                        matDarkFrame
+                    );
+                    boomArm.position.set(-0.04, 0.16, 0.09);
+                    boomArm.rotation.x = -0.22;
+                    boomArm.rotation.y = -0.32;
+                    tabletSwivelGroup.add(boomArm);
+
+                    // Upper neck riser
+                    const stem2 = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.02, 0.02, 0.11, 16),
+                        matDarkFrame
+                    );
+                    stem2.position.set(-0.08, 0.23, 0.19);
+                    tabletSwivelGroup.add(stem2);
+
+                    // Tablet Bezel Housing
+                    const tabletHolder = new THREE.Group();
+                    tabletHolder.position.set(-0.08, 0.35, 0.20);
+                    tabletHolder.rotation.y = 0.38; // Angled slightly toward viewer & user
+                    tabletHolder.rotation.x = -0.06;
+                    tabletSwivelGroup.add(tabletHolder);
+
+                    const bezel = new THREE.Mesh(
+                        createRoundedBoxGeometry(0.30, 0.23, 0.024, 0.018, 5),
+                        matDarkWoodTrim
+                    );
+                    bezel.castShadow = true;
+                    tabletHolder.add(bezel);
+
+                    // Interactive Glowing Screen Plane
+                    tabletScreenMesh = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.265, 0.195),
+                        matTabletScreen
+                    );
+                    tabletScreenMesh.position.set(0, 0, 0.013);
+                    tabletHolder.add(tabletScreenMesh);
+                }
+            });
+
+            // ------------------------------------------------------------------------
+            // F. ARTICULATED DUAL-CHANNEL LEGREST & FOOT ROLLER UNIT
+            // ------------------------------------------------------------------------
+            legrestPivot = new THREE.Group();
+            legrestPivot.position.set(0, 0.52, 0.44);
+            legrestPivot.rotation.x = -0.36; // Slightly angled forward like the photo
+            chairRoot.add(legrestPivot);
+
+            // Rear Structural Legrest Backing Plate
+            const legBackPlate = new THREE.Mesh(
+                createRoundedBoxGeometry(0.76, 0.62, 0.12, 0.04, 5),
+                matOuterShell
+            );
+            legBackPlate.position.set(0, -0.30, -0.02);
+            legBackPlate.castShadow = true;
+            legBackPlate.receiveShadow = true;
+            legrestPivot.add(legBackPlate);
+            shellMeshes.push(legBackPlate);
+
+            // Outer Left & Right Sculpted Legrest Walls (White outer shells)
+            [-1, 1].forEach(side => {
+                const outerLegWall = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.11, 0.56, 0.28, 0.045, 6),
+                    matOuterShell
+                );
+                outerLegWall.position.set(side * 0.35, -0.28, 0.09);
+                outerLegWall.castShadow = true;
+                outerLegWall.receiveShadow = true;
+                legrestPivot.add(outerLegWall);
+                shellMeshes.push(outerLegWall);
+            });
+
+            // Center Divider Wall Between Left & Right Calves
+            const centerLegWall = new THREE.Mesh(
+                createRoundedBoxGeometry(0.11, 0.54, 0.26, 0.045, 6),
+                matPrimaryLeather
+            );
+            centerLegWall.position.set(0, -0.28, 0.09);
+            centerLegWall.castShadow = true;
+            centerLegWall.receiveShadow = true;
+            legrestPivot.add(centerLegWall);
+            leatherMeshes.push(centerLegWall);
+
+            // Dual U-Shaped Calf Channels & Foot Enclosures (Left & Right Legs)
+            [-0.175, 0.175].forEach((legX, idx) => {
+                const legChannel = new THREE.Group();
+                legChannel.position.set(legX, 0, 0);
+                legrestPivot.add(legChannel);
+
+                // Inner Grey Calf Bolster Pads (Left & Right of each calf)
+                [-0.085, 0.085].forEach(padSide => {
+                    const calfPad = new THREE.Mesh(
+                        createRoundedBoxGeometry(0.055, 0.50, 0.23, 0.024, 5),
+                        matSecondaryLeather
+                    );
+                    calfPad.position.set(padSide, -0.27, 0.09);
+                    calfPad.castShadow = true;
+                    legChannel.add(calfPad);
+                    accentLeatherMeshes.push(calfPad);
+                    calfBolsters.push({ mesh: calfPad, baseX: padSide, dir: Math.sign(padSide) });
+                });
+
+                // Rear Calf Cushion Pad
+                const calfBackPad = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.16, 0.50, 0.08, 0.03, 5),
+                    matSecondaryLeather
+                );
+                calfBackPad.position.set(0, -0.27, 0.01);
+                legChannel.add(calfBackPad);
+                accentLeatherMeshes.push(calfBackPad);
+
+                // Lower Foot Pocket Base (Extending forward at the bottom)
+                const footBaseShell = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.34, 0.14, 0.36, 0.045, 6),
+                    matOuterShell
+                );
+                footBaseShell.position.set(0, -0.60, 0.16);
+                footBaseShell.castShadow = true;
+                footBaseShell.receiveShadow = true;
+                legChannel.add(footBaseShell);
+                shellMeshes.push(footBaseShell);
+
+                // Ankle / Instep Grey Air Cushion Cuffs (Matching the distinctive front cuffs in the photo)
+                [-0.10, 0.10].forEach(cuffSide => {
+                    const ankleCuff = new THREE.Mesh(
+                        createRoundedBoxGeometry(0.075, 0.18, 0.24, 0.03, 5),
+                        matSecondaryLeather
+                    );
+                    ankleCuff.position.set(cuffSide, -0.50, 0.19);
+                    ankleCuff.castShadow = true;
+                    legChannel.add(ankleCuff);
+                    accentLeatherMeshes.push(ankleCuff);
+                });
+
+                // Grey Sole Footbed with Animated Shiatsu Foot Rollers
+                const soleBed = new THREE.Mesh(
+                    createRoundedBoxGeometry(0.18, 0.04, 0.26, 0.015, 4),
+                    matSecondaryLeather
+                );
+                soleBed.position.set(0, -0.53, 0.19);
+                legChannel.add(soleBed);
+                accentLeatherMeshes.push(soleBed);
+
+                // 3 Rotating Shiatsu Nodes per Foot
+                for (let r = 0; r < 3; r++) {
+                    const rollerNode = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.026, 0.026, 0.13, 12),
+                        matDarkFrame
+                    );
+                    rollerNode.rotation.z = Math.PI / 2;
+                    rollerNode.position.set(0, -0.51, 0.12 + r * 0.065);
+                    legChannel.add(rollerNode);
+                    footRollerMeshes.push(rollerNode);
+                }
+
+                // Attach Hotspot 3 ("Foot Roller Control") to the right leg channel (viewer's left, matching photo)
+                if (idx === 0) {
+                    const footAnchor = new THREE.Object3D();
+                    footAnchor.position.set(-0.08, -0.22, 0.21);
+                    legChannel.add(footAnchor);
+                    hotspots.foot.anchorObj = footAnchor;
+                }
+            });
+        }
+
+        // ============================================================================
+        // 5. SCENE, STUDIO LIGHTING & ORBIT CONTROLS INITIALIZATION
+        // ============================================================================
+        function initScene() {
+            const container = document.getElementById('canvas-container');
+            clock = new THREE.Clock();
+
+            scene = new THREE.Scene();
+
+            // Perspective Camera matching the studio 3/4 focal length in the reference image
+            camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(-2.35, 1.48, 2.75);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.08;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(0.0, 0.68, 0.05);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.06;
+            controls.minDistance = 1.35;
+            controls.maxDistance = 5.5;
+            controls.maxPolarAngle = Math.PI / 2 - 0.03; // Keep camera above studio floor
+            controls.update();
+
+            // Studio Lighting Setup (Soft overhead key, cool rim, warm fill)
+            const ambientLight = new THREE.HemisphereLight(0xffffff, 0xb8c0c8, 0.78);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xfffcf7, 1.15);
+            keyLight.position.set(-2.6, 4.8, 3.4);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 2048;
+            keyLight.shadow.mapSize.height = 2048;
+            keyLight.shadow.camera.near = 0.5;
+            keyLight.shadow.camera.far = 12;
+            const d = 1.8;
+            keyLight.shadow.camera.left = -d;
+            keyLight.shadow.camera.right = d;
+            keyLight.shadow.camera.top = d;
+            keyLight.shadow.camera.bottom = -d;
+            keyLight.shadow.bias = -0.0005;
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xe2ecff, 0.65);
+            fillLight.position.set(3.2, 2.2, 2.0);
+            scene.add(fillLight);
+
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.55);
+            rimLight.position.set(0.5, 3.0, -3.5);
+            scene.add(rimLight);
+
+            // Studio Tiled Floor & Contact Shadow Plane
+            const floorGeo = new THREE.PlaneGeometry(28, 28);
+            const floorMat = new THREE.MeshStandardMaterial({
+                map: createStudioFloorTexture(),
+                roughness: 0.75,
+                metalness: 0.05
+            });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.position.y = 0;
+            floorMesh.receiveShadow = true;
+            scene.add(floorMesh);
+
+            // Soft Ambient Occlusion Contact Shadow Decal right under the chair
+            const shadowDecal = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 2.6),
+                new THREE.MeshBasicMaterial({
+                    map: createSoftShadowTexture(),
+                    transparent: true,
+                    depthWrite: false
+                })
+            );
+            shadowDecal.rotation.x = -Math.PI / 2;
+            shadowDecal.position.set(0, 0.003, 0.08);
+            scene.add(shadowDecal);
+
+            // Build the 3D Massage Chair
+            buildMassageChair();
+
+            // Cache DOM elements for Hotspots
+            ['recline', 'heat', 'foot', 'airbag', 'armrest'].forEach(key => {
+                hotspots[key].anchorEl = document.getElementById(`anchor-${key}`);
+                hotspots[key].labelEl = document.getElementById(`label-${key}`);
+                hotspots[key].lineEl = document.getElementById(`line-${key}`);
+                hotspots[key].subEl = document.getElementById(`sub-${key}`);
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // ============================================================================
+        // 6. DYNAMIC 3D HOTSPOT PROJECTION & SVG LEADER LINES
+        // ============================================================================
+        const tempVec = new THREE.Vector3();
+
+        function updateHotspotsOverlay() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const isCompact = width < 820;
+            const scaleFactor = isCompact ? 0.58 : 1.0;
+
+            Object.keys(hotspots).forEach(key => {
+                const h = hotspots[key];
+                if (!h.anchorObj || !h.anchorEl) return;
+
+                if (!appState.hotspotsVisible) {
+                    h.anchorEl.style.opacity = '0';
+                    h.anchorEl.style.pointerEvents = 'none';
+                    h.labelEl.style.opacity = '0';
+                    h.labelEl.style.pointerEvents = 'none';
+                    h.lineEl.style.opacity = '0';
+                    return;
+                }
+
+                // Get world position of the 3D hotspot anchor
+                h.anchorObj.getWorldPosition(tempVec);
+                tempVec.project(camera);
+
+                // Convert NDC (-1 to 1) to screen pixels
+                const ax = (tempVec.x * 0.5 + 0.5) * width;
+                const ay = (-(tempVec.y * 0.5) + 0.5) * height;
+
+                // Position the (+) anchor button
+                h.anchorEl.style.transform = `translate3d(${ax}px, ${ay}px, 0)`;
+                h.anchorEl.style.opacity = '1';
+                h.anchorEl.style.pointerEvents = 'auto';
+
+                // Calculate elbow and label coordinates with viewport clamping
+                const elbowX = ax + h.elbowOffset.x * scaleFactor;
+                const elbowY = ay + h.elbowOffset.y * scaleFactor;
+
+                let labelX = ax + h.offset.x * scaleFactor;
+                let labelY = ay + h.offset.y * scaleFactor;
+
+                // Clamp label inside screen bounds
+                const labelRect = h.labelEl.getBoundingClientRect();
+                const lw = labelRect.width || 160;
+                const lh = labelRect.height || 44;
+
+                const isLeft = h.offset.x < 0;
+                let boxLeft = isLeft ? (labelX - lw) : labelX;
+                let boxTop = labelY - lh / 2;
+
+                boxLeft = Math.max(14, Math.min(width - lw - 14, boxLeft));
+                boxTop = Math.max(76, Math.min(height - lh - 105, boxTop));
+
+                h.labelEl.style.left = `${boxLeft}px`;
+                h.labelEl.style.top = `${boxTop}px`;
+                h.labelEl.style.opacity = '1';
+                h.labelEl.style.pointerEvents = 'auto';
+
+                // Connect SVG leader polyline from (+) center -> angled elbow -> edge of label card
+                const lineEndX = isLeft ? (boxLeft + lw) : boxLeft;
+                const lineEndY = boxTop + lh / 2;
+
+                h.lineEl.setAttribute('points', `${ax.toFixed(1)},${ay.toFixed(1)} ${elbowX.toFixed(1)},${lineEndY.toFixed(1)} ${lineEndX.toFixed(1)},${lineEndY.toFixed(1)}`);
+                h.lineEl.style.opacity = '1';
+            });
+        }
+
+        // ============================================================================
+        // 7. INTERACTIVE HOTSPOT ACTIONS, CAMERA TWEENS & CONFIGURATOR LOGIC
+        // ============================================================================
+        function showToast(msg) {
+            const toast = document.getElementById('toast-banner');
+            const text = document.getElementById('toast-text');
+            text.textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 2800);
+        }
+
+        function animateCameraTo(pos, target, duration = 0.85) {
+            appState.cameraTween = {
+                startPos: camera.position.clone(),
+                endPos: new THREE.Vector3(pos.x, pos.y, pos.z),
+                startTarget: controls.target.clone(),
+                endTarget: new THREE.Vector3(target.x, target.y, target.z),
+                elapsed: 0,
+                duration: duration
+            };
+        }
+
+        function setCameraPreset(preset) {
+            appState.turntableActive = false;
+            document.getElementById('btn-turntable').classList.remove('bg-white/20');
+
+            if (preset === 'default') {
+                animateCameraTo({ x: -2.35, y: 1.48, z: 2.75 }, { x: 0.0, y: 0.68, z: 0.05 });
+                showToast('Camera: 3/4 Studio View');
+            } else if (preset === 'front') {
+                animateCameraTo({ x: 0.0, y: 1.35, z: 3.25 }, { x: 0.0, y: 0.65, z: 0.05 });
+                showToast('Camera: Front Symmetry View');
+            } else if (preset === 'side') {
+                animateCameraTo({ x: -3.2, y: 1.15, z: 0.1 }, { x: 0.0, y: 0.65, z: 0.0 });
+                showToast('Camera: Zero-Gravity Side Profile');
+            } else if (preset === 'tablet') {
+                animateCameraTo({ x: -1.15, y: 1.18, z: 1.05 }, { x: -0.52, y: 0.88, z: 0.22 });
+                showToast('Camera: Smart Tablet Controller Close-Up');
+            }
+        }
+
+        function orbitStep(deltaAzimuth, deltaPolar = 0) {
+            const offset = camera.position.clone().sub(controls.target);
+            const spherical = new THREE.Spherical().setFromVector3(offset);
+            spherical.theta += deltaAzimuth;
+            spherical.phi = Math.max(0.35, Math.min(Math.PI / 2 - 0.05, spherical.phi + deltaPolar));
+            offset.setFromSpherical(spherical);
+            const newPos = controls.target.clone().add(offset);
+            animateCameraTo(newPos, controls.target, 0.55);
+        }
+
+        function toggleTurntable() {
+            appState.turntableActive = !appState.turntableActive;
+            const btn = document.getElementById('btn-turntable');
+            if (appState.turntableActive) {
+                btn.classList.add('bg-white/20');
+                showToast('360° Studio Turntable Rotation Enabled');
+            } else {
+                btn.classList.remove('bg-white/20');
+                showToast('Turntable Rotation Paused');
+            }
+        }
+
+        function triggerHotspot(key) {
+            if (key === 'recline') {
+                appState.reclineActive = !appState.reclineActive;
+                appState.reclineTarget = appState.reclineActive ? 0.92 : 0.12;
+                document.getElementById('recline-slider').value = Math.round(appState.reclineTarget * 100);
+                setHotspotVisualState('recline', appState.reclineActive);
+                hotspots.recline.subEl.textContent = appState.reclineActive ? 'Zero-G Active (162°)' : 'Zero-G Upright (118°)';
+                animateCameraTo({ x: -2.45, y: 1.42, z: 2.55 }, { x: 0.0, y: 0.72, z: 0.0 });
+                showToast(appState.reclineActive ? 'Recline System: Zero-Gravity Position (162°)' : 'Recline System: Upright Lounge Position');
+            }
+            else if (key === 'heat') {
+                appState.heatActive = !appState.heatActive;
+                setHotspotVisualState('heat', appState.heatActive, true);
+                hotspots.heat.subEl.textContent = appState.heatActive ? '44°C Lumbar & Seat Glow' : 'Graphene IR Standby';
+                animateCameraTo({ x: -1.95, y: 1.38, z: 2.15 }, { x: -0.1, y: 0.68, z: 0.05 });
+                showToast(appState.heatActive ? 'Graphene Infrared Heat Therapy: ON (44°C)' : 'Infrared Heat Therapy: Standby');
+            }
+            else if (key === 'foot') {
+                appState.footRollerActive = !appState.footRollerActive;
+                setHotspotVisualState('foot', appState.footRollerActive);
+                hotspots.foot.subEl.textContent = appState.footRollerActive ? 'Rollers & Calf Kneading ON' : 'Tri-Zone Reflexology';
+                animateCameraTo({ x: -1.65, y: 0.98, z: 2.35 }, { x: -0.05, y: 0.32, z: 0.52 });
+                showToast(appState.footRollerActive ? 'Tri-Zone Shiatsu Foot Rollers & Calf Compression: ON' : 'Foot Roller Control: Paused');
+            }
+            else if (key === 'airbag') {
+                appState.airbagActive = !appState.airbagActive;
+                setHotspotVisualState('airbag', appState.airbagActive);
+                hotspots.airbag.subEl.textContent = appState.airbagActive ? 'Rhythmic Compression ON' : '64-Cell Airbag Bolsters';
+                animateCameraTo({ x: -1.85, y: 1.38, z: 2.35 }, { x: 0.15, y: 0.85, z: 0.05 });
+                showToast(appState.airbagActive ? '64-Cell Shoulder & Hip Airbags: Rhythmic Compression' : 'Airbag Bolsters: Released');
+            }
+            else if (key === 'armrest') {
+                appState.armrestAdjusted = !appState.armrestAdjusted;
+                setHotspotVisualState('armrest', appState.armrestAdjusted);
+                hotspots.armrest.subEl.textContent = appState.armrestAdjusted ? 'Armrests & Tablet Swiveled' : 'Articulated Dock & Trim';
+                animateCameraTo({ x: -2.05, y: 1.35, z: 2.35 }, { x: 0.0, y: 0.68, z: 0.15 });
+                showToast(appState.armrestAdjusted ? 'Armrests Articulated & Touchscreen Swiveled' : 'Armrests & Tablet Returned to Home Dock');
+            }
+
+            updateHudTelemetry();
+        }
+
+        function setHotspotVisualState(key, isActive, isHeat = false) {
+            const h = hotspots[key];
+            const activeClass = isHeat ? 'heat-active' : 'active';
+            h.anchorEl.classList.toggle(activeClass, isActive);
+            h.labelEl.classList.toggle(activeClass, isActive);
+            h.lineEl.classList.toggle(activeClass, isActive);
+        }
+
+        function onReclineSlider(val) {
+            const norm = parseFloat(val) / 100;
+            appState.reclineTarget = norm;
+            appState.reclineActive = norm > 0.5;
+            setHotspotVisualState('recline', appState.reclineActive);
+            const deg = Math.round(112 + norm * 52);
+            document.getElementById('recline-readout').textContent = `${deg}°`;
+            hotspots.recline.subEl.textContent = appState.reclineActive ? `Zero-G Active (${deg}°)` : `Zero-G Upright (${deg}°)`;
+        }
+
+        function setColorTheme(themeKey) {
+            appState.colorTheme = themeKey;
+            const theme = COLOR_THEMES[themeKey];
+
+            ['pearl', 'obsidian', 'espresso'].forEach(k => {
+                document.getElementById(`swatch-${k}`).classList.toggle('selected', k === themeKey);
+            });
+
+            matPrimaryLeather.color.setHex(theme.primaryLeather);
+            matSecondaryLeather.color.setHex(theme.secondaryLeather);
+            matOuterShell.color.setHex(theme.outerShell);
+            matDarkWoodTrim.color.setHex(theme.woodTrim);
+
+            if (!appState.heatActive && lumbarHeatMesh) {
+                lumbarHeatMesh.material.color.setHex(theme.primaryLeather);
+            }
+
+            showToast(`Upholstery Finish: ${theme.name}`);
+        }
+
+        function toggleFullAnimation() {
+            appState.fullDemoPlaying = !appState.fullDemoPlaying;
+            const btn = document.getElementById('btn-play-anim');
+            const text = document.getElementById('play-btn-text');
+            const icon = document.getElementById('play-icon');
+
+            if (appState.fullDemoPlaying) {
+                btn.classList.add('active');
+                text.textContent = 'STOP ANIMATION';
+                icon.innerHTML = '<rect x="5" y="4" width="5" height="16"></rect><rect x="14" y="4" width="5" height="16"></rect>';
+
+                // Enable all massage systems for full zero-gravity demonstration
+                appState.reclineActive = true;
+                appState.reclineTarget = 0.92;
+                document.getElementById('recline-slider').value = 92;
+                appState.heatActive = true;
+                appState.footRollerActive = true;
+                appState.airbagActive = true;
+                appState.armrestAdjusted = true;
+
+                setHotspotVisualState('recline', true);
+                setHotspotVisualState('heat', true, true);
+                setHotspotVisualState('foot', true);
+                setHotspotVisualState('airbag', true);
+                setHotspotVisualState('armrest', true);
+
+                hotspots.recline.subEl.textContent = 'Zero-G Active (162°)';
+                hotspots.heat.subEl.textContent = '44°C Lumbar & Seat Glow';
+                hotspots.foot.subEl.textContent = 'Rollers & Calf Kneading ON';
+                hotspots.airbag.subEl.textContent = 'Rhythmic Compression ON';
+                hotspots.armrest.subEl.textContent = 'Armrests & Tablet Swiveled';
+
+                showToast('Full 4D Zero-Gravity Massage Cycle Started');
+            } else {
+                btn.classList.remove('active');
+                text.textContent = 'PLAY ANIMATION';
+                icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+
+                appState.reclineActive = false;
+                appState.reclineTarget = 0.12;
+                document.getElementById('recline-slider').value = 12;
+                appState.heatActive = false;
+                appState.footRollerActive = false;
+                appState.airbagActive = false;
+                appState.armrestAdjusted = false;
+
+                setHotspotVisualState('recline', false);
+                setHotspotVisualState('heat', false, true);
+                setHotspotVisualState('foot', false);
+                setHotspotVisualState('airbag', false);
+                setHotspotVisualState('armrest', false);
+
+                hotspots.recline.subEl.textContent = 'Zero-G Upright (118°)';
+                hotspots.heat.subEl.textContent = 'Graphene IR Standby';
+                hotspots.foot.subEl.textContent = 'Tri-Zone Reflexology';
+                hotspots.airbag.subEl.textContent = '64-Cell Airbag Bolsters';
+                hotspots.armrest.subEl.textContent = 'Articulated Dock & Trim';
+
+                showToast('Massage Cycle Demo Stopped');
+            }
+            updateHudTelemetry();
+        }
+
+        function toggleXRayMode() {
+            appState.xrayActive = !appState.xrayActive;
+            const btn = document.getElementById('btn-xray');
+            const text = document.getElementById('xray-btn-text');
+
+            btn.classList.toggle('active', appState.xrayActive);
+            text.textContent = appState.xrayActive ? 'EXIT X-RAY TRACK' : 'EXPLORE IN AR / X-RAY';
+
+            internalRollerGroup.visible = appState.xrayActive;
+            matPrimaryLeather.transparent = appState.xrayActive;
+            matPrimaryLeather.opacity = appState.xrayActive ? 0.42 : 1.0;
+            matPrimaryLeather.needsUpdate = true;
+
+            if (lumbarHeatMesh) {
+                lumbarHeatMesh.material.transparent = appState.xrayActive;
+                lumbarHeatMesh.material.opacity = appState.xrayActive ? 0.48 : 1.0;
+            }
+
+            showToast(appState.xrayActive ? '4D SL-Track X-Ray View: Internal Quad Rollers Visible' : 'Standard Studio Materials Restored');
+        }
+
+        function toggleHotspotsVisibility() {
+            appState.hotspotsVisible = !appState.hotspotsVisible;
+            const btn = document.getElementById('toggle-labels-btn');
+            btn.textContent = appState.hotspotsVisible ? 'Visible' : 'Hidden';
+        }
+
+        function updateHudTelemetry() {
+            const modeEl = document.querySelector('#hud-mode span:last-child');
+            const pulseEl = document.getElementById('hud-pulse');
+
+            if (appState.fullDemoPlaying) {
+                modeEl.textContent = 'Full Zero-G 4D Therapy';
+                pulseEl.className = 'w-2 h-2 rounded-full bg-sky-400 animate-ping';
+            } else if (appState.heatActive) {
+                modeEl.textContent = 'Infrared Thermal Shiatsu';
+                pulseEl.className = 'w-2 h-2 rounded-full bg-orange-400';
+            } else if (appState.footRollerActive || appState.airbagActive) {
+                modeEl.textContent = 'Airbag & Reflexology';
+                pulseEl.className = 'w-2 h-2 rounded-full bg-sky-400';
+            } else {
+                modeEl.textContent = 'Deep Tissue Shiatsu';
+                pulseEl.className = 'w-2 h-2 rounded-full bg-emerald-400';
+            }
+        }
+
+        // ============================================================================
+        // 8. MAIN ANIMATION LOOP
+        // ============================================================================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(clock.getDelta(), 0.1);
+            const elapsed = clock.getElapsedTime();
+
+            // 1. Smooth Camera Tweening
+            if (appState.cameraTween) {
+                const tw = appState.cameraTween;
+                tw.elapsed += dt;
+                const t = Math.min(1, tw.elapsed / tw.duration);
+                // Smooth cubic ease-out
+                const ease = 1 - Math.pow(1 - t, 3);
+                camera.position.lerpVectors(tw.startPos, tw.endPos, ease);
+                controls.target.lerpVectors(tw.startTarget, tw.endTarget, ease);
+                if (t >= 1) appState.cameraTween = null;
+            }
+
+            // 2. Optional 360 Turntable Orbit
+            if (appState.turntableActive && !appState.cameraTween) {
+                const offset = camera.position.clone().sub(controls.target);
+                offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), dt * 0.45);
+                camera.position.copy(controls.target).add(offset);
+            }
+
+            controls.update();
+
+            // 3. Smooth Zero-Gravity Recline Kinematics
+            appState.reclineCurrent += (appState.reclineTarget - appState.reclineCurrent) * Math.min(1, dt * 4.5);
+            const r = appState.reclineCurrent;
+
+            if (reclinePivot && backrestGroup && legrestPivot) {
+                // Cradle tilts backward while sliding slightly forward (Zero-Gravity Wall-Hugger kinematics)
+                reclinePivot.rotation.x = -r * 0.22;
+                reclinePivot.position.z = 0.02 + r * 0.14;
+                reclinePivot.position.y = 0.56 - r * 0.03;
+
+                // Backrest reclines smoothly
+                backrestGroup.rotation.x = -0.28 - r * 0.48;
+
+                // Legrest elevates to heart level
+                legrestPivot.rotation.x = -0.32 - r * 0.68;
+                legrestPivot.position.z = 0.44 + r * 0.12;
+                legrestPivot.position.y = 0.52 - r * 0.02;
+
+                const deg = Math.round(112 + r * 52);
+                document.getElementById('recline-readout').textContent = `${deg}°`;
+            }
+
+            // 4. Infrared Heat Therapy Thermal Glow Animation
+            const targetHeat = appState.heatActive ? 1.0 : 0.0;
+            appState.heatIntensity += (targetHeat - appState.heatIntensity) * Math.min(1, dt * 4.0);
+            if (lumbarHeatMesh) {
+                const pulse = 0.65 + 0.35 * Math.sin(elapsed * 3.8);
+                lumbarHeatMesh.material.emissive.setRGB(
+                    0.92 * appState.heatIntensity * pulse,
+                    0.26 * appState.heatIntensity * pulse,
+                    0.04 * appState.heatIntensity * pulse
+                );
+            }
+
+            // 5. Shoulder & Hip Airbag Rhythmic Compression Animation
+            shoulderBolsters.forEach(b => {
+                if (appState.airbagActive) {
+                    const squeeze = Math.sin(elapsed * 3.2) * 0.5 + 0.5;
+                    b.group.rotation.y = b.baseRotY + b.side * (-0.18 * squeeze);
+                    b.group.scale.x = 1.0 + 0.22 * squeeze;
+                } else {
+                    b.group.rotation.y += (b.baseRotY - b.group.rotation.y) * 0.1;
+                    b.group.scale.x += (1.0 - b.group.scale.x) * 0.1;
+                }
+            });
+
+            hipBolsters.forEach(b => {
+                if (appState.airbagActive) {
+                    const squeeze = Math.sin(elapsed * 3.2 + 1.2) * 0.5 + 0.5;
+                    b.group.position.x = b.baseX - b.side * (0.032 * squeeze);
+                    b.group.scale.x = 1.0 + 0.25 * squeeze;
+                } else {
+                    b.group.position.x += (b.baseX - b.group.position.x) * 0.1;
+                    b.group.scale.x += (1.0 - b.group.scale.x) * 0.1;
+                }
+            });
+
+            // 6. Foot Rollers & Calf Kneading Animation
+            if (appState.footRollerActive) {
+                footRollerMeshes.forEach((m, i) => {
+                    m.rotation.x += dt * 6.5 * (i % 2 === 0 ? 1 : -1);
+                    m.position.y = -0.51 + Math.sin(elapsed * 7.0 + i) * 0.012;
+                });
+                calfBolsters.forEach(c => {
+                    const press = Math.sin(elapsed * 4.0) * 0.5 + 0.5;
+                    c.mesh.position.x = c.baseX - c.dir * (0.018 * press);
+                });
+            } else {
+                calfBolsters.forEach(c => {
+                    c.mesh.position.x += (c.baseX - c.mesh.position.x) * 0.1;
+                });
+            }
+
+            // 7. Armrest & Touchscreen Tablet Articulation
+            const targetArm = appState.armrestAdjusted ? 1.0 : 0.0;
+            appState.armrestProgress += (targetArm - appState.armrestProgress) * Math.min(1, dt * 5.0);
+            if (leftArmGroup && rightArmGroup && tabletSwivelGroup) {
+                const a = appState.armrestProgress;
+                // Armrests slide backward seamlessly with recline or manual adjustment
+                const slideZ = 0.05 - (r * 0.08) - (a * 0.06);
+                leftArmGroup.position.z = slideZ;
+                rightArmGroup.position.z = slideZ;
+                leftArmGroup.rotation.x = -r * 0.16;
+                rightArmGroup.rotation.x = -r * 0.16;
+
+                // Swivel the touchscreen tablet toward the user
+                tabletSwivelGroup.rotation.y = a * 0.52 + Math.sin(elapsed * 1.5) * 0.02 * a;
+            }
+
+            // 8. Internal 4D SL-Track Quad Roller Motion (Visible in X-Ray mode + subtle cushion wave)
+            if (internalRollerGroup) {
+                const spinePos = 0.22 + (Math.sin(elapsed * 2.0) * 0.5 + 0.5) * 0.62;
+                internalRollerGroup.position.y = spinePos;
+                internalRollerGroup.position.z = 0.02 + Math.sin(elapsed * 6.0) * 0.025;
+                internalRollerGroup.rotation.x = Math.sin(elapsed * 4.0) * 0.2;
+            }
+
+            // Update live tablet screen canvas texture every few frames
+            if (Math.floor(elapsed * 20) % 2 === 0) {
+                updateTabletDisplay(elapsed);
+            }
+
+            // Render 3D scene & synchronize 2D SVG leader lines
+            renderer.render(scene, camera);
+            updateHotspotsOverlay();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Start experience on window load
+        window.onload = function () {
+            initScene();
+            animate();
+        };
+    </script>
+</body>
+</html>
